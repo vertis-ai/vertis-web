@@ -1,0 +1,554 @@
+---
+alwaysApply: true
+---
+
+# Vertis Web 2 - TanStack Start Project Rules
+
+## Project Overview
+This is a TanStack Start application - a full-stack React framework with file-based routing, SSR support, and integrated data fetching. The project uses modern React patterns, TypeScript, Tailwind CSS, and TanStack ecosystem tools.
+
+## Core Technologies & Packages
+
+### Framework & Routing
+- **TanStack Start** (`@tanstack/react-start`) - Full-stack React framework
+- **TanStack Router** (`@tanstack/react-router`) - File-based routing with SSR support
+- **Vite** - Build tool and dev server
+- **Nitro** - Deployment adapter (agnostic)
+
+### Data Fetching & API
+- **TanStack Query** (`@tanstack/react-query`) - Server state management and data fetching
+- **tRPC** (`@trpc/server`, `@trpc/client`, `@trpc/tanstack-react-query`) - End-to-end typesafe APIs
+- **SuperJSON** - Enhanced JSON serialization for tRPC
+
+### Forms & Validation
+- **TanStack Form** (`@tanstack/react-form`) - Form state management
+- **Zod** (`zod`) - Schema validation (v4.x)
+
+### State Management
+- **TanStack Store** (`@tanstack/store`, `@tanstack/react-store`) - Client-side state management
+
+### UI & Styling
+- **Tailwind CSS** (`tailwindcss`, `@tailwindcss/vite`) - Utility-first CSS (v4.x)
+- **Shadcn UI** - Component library built on Radix UI
+- **Radix UI** - Headless UI primitives (Label, Select, Slider, Switch, Slot)
+- **class-variance-authority** - Component variant management
+- **clsx** + **tailwind-merge** - Conditional class name utilities
+- **lucide-react** - Icon library
+
+### Tables
+- **TanStack Table** (`@tanstack/react-table`) - Headless table library
+
+### Development Tools
+- **Biome** (`@biomejs/biome`) - Linting and formatting (replaces ESLint/Prettier)
+- **Vitest** - Testing framework
+- **TanStack Devtools** - Development tools for Router, Query, and Store
+
+### Utilities
+- **@faker-js/faker** - Fake data generation
+- **@modelcontextprotocol/sdk** - MCP integration (experimental)
+
+## Code Style & Formatting
+
+### Biome Configuration
+- **Linter**: Biome (NOT ESLint)
+- **Formatter**: Biome (NOT Prettier)
+- **Indentation**: Tabs (not spaces)
+- **Quote Style**: Double quotes
+- **Line Endings**: Auto-detect
+- Run `pnpm check` to lint and format, `pnpm lint` for linting only, `pnpm format` for formatting only
+
+### TypeScript
+- **Strict Mode**: Enabled
+- **Target**: ES2022
+- **Module**: ESNext
+- **JSX**: `react-jsx` (React 19+ syntax, no explicit React import needed)
+- **Path Aliases**: Use `@/*` for `./src/*` imports
+- **Type Safety**: Never use `any` - use `unknown` if type is truly unknown
+- **Interfaces vs Types**: Prefer interfaces for object shapes, types for unions/intersections
+- **Explicit Return Types**: Use explicit return types for functions, especially public APIs
+
+### Naming Conventions
+- **Files**: 
+  - Routes: `kebab-case.tsx` (e.g., `user-profile.tsx`)
+  - Components: `PascalCase.tsx` (e.g., `UserProfile.tsx`)
+  - Utilities: `camelCase.ts` (e.g., `formatDate.ts`)
+  - Hooks: `camelCase.ts` with `use` prefix (e.g., `useUserData.ts`)
+- **Variables**: `camelCase` for variables and functions, `PascalCase` for components and types
+- **Constants**: `UPPER_SNAKE_CASE` for true constants
+- **Exports**: Prefer named exports over default exports
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ui/             # Shadcn UI components (button, input, etc.)
+│   └── [feature]/      # Feature-specific components
+├── routes/             # File-based routes (TanStack Router)
+│   ├── __root.tsx      # Root layout route
+│   ├── index.tsx       # Home route (/)
+│   └── [feature]/      # Feature routes
+├── integrations/       # Third-party integrations
+│   ├── tanstack-query/ # TanStack Query setup
+│   └── trpc/           # tRPC setup (router, client, react hooks)
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions and shared code
+├── data/               # Static data, mock data, data fetching functions
+├── utils/              # Utility functions (MCP handlers, etc.)
+├── styles.css          # Global styles and Tailwind imports
+└── router.tsx          # Router configuration
+```
+
+## Routing (TanStack Router)
+
+### File-Based Routing
+- Routes are defined as files in `src/routes/`
+- File names map to URL paths: `routes/user/profile.tsx` → `/user/profile`
+- **Automatic Route Generation**: TanStack Router automatically generates route files when you create new files in `src/routes/`
+- Use `createFileRoute` to define routes (this is the file-based routing pattern):
+  ```tsx
+  import { createFileRoute } from '@tanstack/react-router'
+  
+  export const Route = createFileRoute('/user/profile')({
+    component: UserProfile,
+    loader: async () => {
+      // Data fetching before render
+      return await fetchUserData()
+    },
+  })
+  ```
+
+### Route Patterns
+- **Root Route**: `__root.tsx` - Layout wrapper for all routes
+- **Index Route**: `index.tsx` - Home page (`/`)
+- **Dynamic Segments**: `[id].tsx` - Dynamic route params (e.g., `[id].tsx` → `/users/:id`)
+- **Catch-All**: `$.tsx` - Catch-all routes
+- **API Routes**: `api.*.ts` or `api.*.tsx` - API endpoints
+- **Nested Routes**: Create subdirectories (e.g., `routes/users/[id]/settings.tsx` → `/users/:id/settings`)
+
+### Route Features
+- **Loaders**: Use `loader` for SSR data fetching - runs on server during SSR and on client for client-side navigation
+- **Before Load**: Use `beforeLoad` for authentication/redirects
+- **Error Components**: Use `errorComponent` for error boundaries
+- **Pending Components**: Use `pendingComponent` for loading states
+- **Access Loader Data**: `Route.useLoaderData()` in component
+- **Loader Example with Typing**:
+  ```tsx
+  export const Route = createFileRoute('/people')({
+    loader: async () => {
+      const response = await fetch('https://swapi.dev/api/people')
+      return response.json() as Promise<{
+        results: {
+          name: string
+        }[]
+      }>
+    },
+    component: () => {
+      const data = Route.useLoaderData()
+      return (
+        <ul>
+          {data.results.map((person) => (
+            <li key={person.name}>{person.name}</li>
+          ))}
+        </ul>
+      )
+    },
+  })
+  ```
+
+### Navigation
+- Use `Link` component from `@tanstack/react-router` for SPA navigation:
+  ```tsx
+  import { Link } from '@tanstack/react-router'
+  
+  // In JSX:
+  <Link to="/about">About</Link>
+  <Link to="/users/[id]" params={{ id: '123' }}>User Profile</Link>
+  ```
+- Use `useNavigate` hook for programmatic navigation
+- Use `useParams` for route parameters
+- Use `useSearch` for query parameters
+- Links provide SPA navigation (no full page reload)
+
+### Layouts
+- Layout is defined in `src/routes/__root.tsx`
+- Use `<Outlet />` component to render child route content
+- Everything in the root route component appears on all routes
+- Example layout pattern:
+  ```tsx
+  import { Outlet, createRootRoute } from '@tanstack/react-router'
+  import { Link } from '@tanstack/react-router'
+  
+  export const Route = createRootRoute({
+    component: () => (
+      <>
+        <header>
+          <nav>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+          </nav>
+        </header>
+        <Outlet /> {/* Child routes render here */}
+      </>
+    ),
+  })
+  ```
+
+## Data Fetching
+
+### Overview
+There are multiple ways to fetch data in TanStack Start:
+1. **Route Loaders** - Built into TanStack Router for SSR data fetching
+2. **TanStack Query** - Client-side data fetching with caching and synchronization
+3. **tRPC** - End-to-end typesafe APIs
+
+You can use TanStack Query as an addition or alternative to route loaders. Both approaches work well together.
+
+### TanStack Query (React Query)
+- **Provider Setup**: Configured in `src/integrations/tanstack-query/root-provider.tsx`
+- **SSR Integration**: Uses `@tanstack/react-router-ssr-query` for SSR support
+- **Query Client**: Access via router context (already configured)
+- **Devtools**: TanStack Query Devtools are integrated in the root route via `TanStackDevtools`
+- **Usage Pattern**:
+  ```tsx
+  import { useQuery, useMutation } from '@tanstack/react-query'
+  
+  // Query example
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['people'],
+    queryFn: () =>
+      fetch('https://swapi.dev/api/people')
+        .then((res) => res.json())
+        .then((data) => data.results as { name: string }[]),
+    initialData: [], // Optional: provide initial data
+  })
+  
+  // Mutation example
+  const { mutate } = useMutation({
+    mutationFn: (newTodo: string) =>
+      fetch('/api/todos', {
+        method: 'POST',
+        body: JSON.stringify(newTodo),
+      }).then((res) => res.json()),
+    onSuccess: () => {
+      // Invalidate queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
+  ```
+- **When to Use**: TanStack Query is excellent for client-side data fetching, caching, and synchronization
+- **Alternative to Loaders**: Can be used as an alternative or complement to route loaders
+- **Documentation**: See [TanStack Query docs](https://tanstack.com/query/latest/docs/framework/react/overview)
+
+### tRPC
+- **Router Definition**: `src/integrations/trpc/router.ts`
+- **Procedures**: Use `publicProcedure` for public endpoints, create protected procedures as needed
+- **Validation**: Use Zod schemas with `.input()` for input validation
+- **Client Usage**: 
+  ```tsx
+  import { useTRPC } from '@/integrations/trpc/react'
+  
+  const trpc = useTRPC()
+  const { data } = trpc.todos.list.useQuery()
+  const { mutate } = trpc.todos.add.useMutation()
+  ```
+- **Server-Side**: Use `trpc` from router context in loaders
+- **Type Safety**: Export router type: `export type TRPCRouter = typeof trpcRouter`
+
+### Route Loaders (SSR)
+- Use loaders for initial data fetching in routes
+- Loaders run on server during SSR and on client for client-side navigation
+- Access loader data with `Route.useLoaderData()`
+- Combine with TanStack Query for optimal caching
+- **Benefits**: Loaders simplify data fetching logic and ensure data is available before render
+- **Documentation**: See [TanStack Router Loader docs](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters)
+
+## Forms (TanStack Form)
+
+### Form Setup
+- Use `@tanstack/react-form` for form state management
+- Create custom form hooks in `src/hooks/` using `createFormHook`
+- Use Zod schemas for validation with `validators.onBlur` or `validators.onChange`
+
+### Form Pattern
+```tsx
+import { useAppForm } from '@/hooks/useForm' // Custom hook
+import { z } from 'zod'
+
+const schema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  email: z.string().email('Invalid email'),
+})
+
+function MyForm() {
+  const form = useAppForm({
+    defaultValues: {
+      title: '',
+      email: '',
+    },
+    validators: {
+      onBlur: schema,
+    },
+    onSubmit: ({ value }) => {
+      // Handle submission
+    },
+  })
+  
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault()
+      form.handleSubmit()
+    }}>
+      <form.AppField name="title">
+        {(field) => <field.TextField label="Title" />}
+      </form.AppField>
+    </form>
+  )
+}
+```
+
+## State Management
+
+### TanStack Store
+- Use for client-side state that doesn't need server sync
+- Create stores in `src/lib/` or feature-specific locations
+- **Basic Store Pattern**:
+  ```tsx
+  import { Store } from '@tanstack/store'
+  import { useStore } from '@tanstack/react-store'
+  
+  const countStore = new Store(0)
+  
+  function Component() {
+    const count = useStore(countStore)
+    return (
+      <button onClick={() => countStore.setState((n) => n + 1)}>
+        Increment - {count}
+      </button>
+    )
+  }
+  ```
+
+### Derived State
+- Use `Derived` class for computed state that depends on other stores
+- Derived state automatically updates when base state changes
+- **Important**: Must call `.mount()` on derived stores to start updating
+- **Derived Store Pattern**:
+  ```tsx
+  import { Store, Derived } from '@tanstack/store'
+  import { useStore } from '@tanstack/react-store'
+  
+  const countStore = new Store(0)
+  
+  // Create derived store
+  const doubledStore = new Derived({
+    fn: () => countStore.state * 2,
+    deps: [countStore], // Dependencies array
+  })
+  doubledStore.mount() // Required: start the derived store
+  
+  function Component() {
+    const count = useStore(countStore)
+    const doubledCount = useStore(doubledStore)
+    
+    return (
+      <>
+        <button onClick={() => countStore.setState((n) => n + 1)}>
+          Increment - {count}
+        </button>
+        <div>Doubled - {doubledCount}</div>
+      </>
+    )
+  }
+  ```
+- **Documentation**: See [TanStack Store docs](https://tanstack.com/store/latest)
+
+## UI Components & Styling
+
+### Shadcn UI
+- Components are in `src/components/ui/`
+- Add new components: `pnpx shadcn@latest add [component-name]`
+- Components use `class-variance-authority` for variants
+- Use `cn()` utility from `@/lib/utils` for conditional classes
+
+### Tailwind CSS
+- **Version**: v4.x (via `@tailwindcss/vite`)
+- **Configuration**: Inline in `src/styles.css` or `tailwind.config.js`
+- **Mobile-First**: Always use mobile-first responsive design
+- **Custom Utilities**: Use `@apply` sparingly, prefer utility classes
+- **Dark Mode**: Use `dark:` prefix for dark mode styles (if configured)
+
+### Component Patterns
+- Use Radix UI primitives for accessible components
+- Compose Shadcn components for complex UIs
+- Use `asChild` prop pattern for component composition
+- Follow Shadcn's "New York" style (as configured in `components.json`)
+
+### Styling Utilities
+- Use `cn()` from `@/lib/utils` for merging Tailwind classes
+- Pattern: `cn("base-classes", conditionalClasses, props.className)`
+- Use `clsx` for conditional classes, `tailwind-merge` to resolve conflicts
+
+## Tables (TanStack Table)
+
+- Use `@tanstack/react-table` for complex table needs
+- Headless library - style with Tailwind
+- Follow TanStack Table patterns for sorting, filtering, pagination
+- Example data structure in `src/data/demo-table-data.ts`
+
+## Testing
+
+### Vitest
+- Test files: `*.test.ts` or `*.test.tsx` (colocated or in `__tests__/`)
+- Run tests: `pnpm test`
+- Use `@testing-library/react` for component testing
+- Use `jsdom` for DOM simulation
+
+### Test Patterns
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { MyComponent } from './MyComponent'
+
+describe('MyComponent', () => {
+  it('renders correctly', () => {
+    render(<MyComponent />)
+    expect(screen.getByText('Hello')).toBeInTheDocument()
+  })
+})
+```
+
+## API Routes
+
+### TanStack Start API Routes
+- API routes in `src/routes/api.*.ts` or `src/routes/api.*.tsx`
+- Use Nitro server functions for API endpoints
+- Pattern:
+  ```tsx
+  import { createFileRoute } from '@tanstack/react-router'
+  
+  export const Route = createFileRoute('/api/todos')({
+    GET: async () => {
+      return Response.json({ todos: [] })
+    },
+    POST: async ({ request }) => {
+      const body = await request.json()
+      // Handle POST
+      return Response.json({ success: true })
+    },
+  })
+  ```
+
+### tRPC API Routes
+- tRPC router handles API routes automatically
+- Access via `/api/trpc` endpoint
+- Use `httpBatchStreamLink` for batching (configured in `src/integrations/trpc/react.ts`)
+
+## Environment & Configuration
+
+### Environment Variables
+- Use `.env` files for environment variables
+- Access via `process.env` (server-side) or `import.meta.env` (client-side)
+- Type-safe env access recommended (create `src/env.ts`)
+
+### Path Aliases
+- `@/*` → `./src/*`
+- Configured in `tsconfig.json`
+- Use for all imports: `import { Button } from '@/components/ui/button'`
+
+## Development Workflow
+
+### Getting Started
+- Install dependencies: `pnpm install`
+- Start dev server: `pnpm dev` (runs on port 3000)
+- Build for production: `pnpm build`
+- Preview production build: `pnpm serve`
+
+### Scripts
+- `pnpm dev` - Start dev server (port 3000)
+- `pnpm build` - Build for production
+- `pnpm serve` - Preview production build
+- `pnpm test` - Run tests
+- `pnpm lint` - Lint code
+- `pnpm format` - Format code
+- `pnpm check` - Lint and format
+
+### Devtools
+- TanStack Router Devtools - Route debugging (integrated in root route)
+- TanStack Query Devtools - Query debugging (integrated in root route)
+- TanStack Store Devtools - Store debugging (integrated in root route)
+- All integrated in root route via `TanStackDevtools` component
+- Devtools are automatically available in development mode
+
+## Best Practices
+
+### Component Organization
+- Keep components small and focused
+- Extract reusable logic into custom hooks
+- Colocate related files (component, types, utils) in feature folders
+- Use composition over configuration
+
+### Performance
+- Use React.memo() for expensive components
+- Leverage TanStack Query caching for data
+- Use route loaders for SSR data fetching
+- Implement proper loading and error states
+
+### Type Safety
+- Leverage TypeScript strict mode
+- Use generated types from tRPC
+- Type all function parameters and return values
+- Avoid `any` - use `unknown` and type guards
+
+### Error Handling
+- Use route `errorComponent` for route-level errors
+- Implement error boundaries for component errors
+- Handle loading and error states in queries
+- Provide user-friendly error messages
+
+### Code Quality
+- Run `pnpm check` before committing
+- Write tests for critical functionality
+- Keep functions pure when possible
+- Use meaningful variable and function names
+- Add JSDoc comments for public APIs
+
+## MCP Integration (Experimental)
+
+- MCP (Model Context Protocol) is in development
+- Handlers in `src/utils/mcp-handler.ts`
+- Routes in `src/routes/mcp.ts`
+- Note: MCP does not support authentication currently
+- Use with caution as API may change
+
+## Demo Files
+
+- Files prefixed with `demo.*` are examples and can be safely deleted
+- Reference them for patterns but don't commit demo code to production
+- Demo files are provided as starting points to explore installed features
+- Examples include: forms, tables, queries, SSR patterns, API routes, and more
+
+## Additional Resources
+
+- **TanStack Documentation**: https://tanstack.com
+- **TanStack Router**: https://tanstack.com/router
+- **TanStack Query**: https://tanstack.com/query
+- **TanStack Form**: https://tanstack.com/form
+- **TanStack Store**: https://tanstack.com/store
+- **TanStack Table**: https://tanstack.com/table
+
+## Summary: Quick Reference
+
+| Purpose | Location | Pattern |
+|---------|----------|---------|
+| Routes | `src/routes/` | File-based, `createFileRoute` |
+| Components | `src/components/` | Named exports, PascalCase |
+| UI Components | `src/components/ui/` | Shadcn components |
+| Hooks | `src/hooks/` | `use` prefix, camelCase |
+| Utilities | `src/lib/` | camelCase functions |
+| Data Fetching | TanStack Query or tRPC | `useQuery`, `trpc.*.useQuery` |
+| Forms | TanStack Form + Zod | Custom hooks in `src/hooks/` |
+| State | TanStack Store | `src/lib/` or feature folders |
+| API Routes | `src/routes/api.*` | TanStack Start or tRPC |
+| Types | Colocated or `src/types/` | Interfaces preferred |
+| Tests | Colocated `*.test.ts` | Vitest + Testing Library |
