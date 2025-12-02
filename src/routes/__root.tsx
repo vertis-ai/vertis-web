@@ -1,3 +1,4 @@
+import type { TRPCRouter } from "@/integrations/trpc/router"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 import type { QueryClient } from "@tanstack/react-query"
 import {
@@ -8,8 +9,6 @@ import {
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
-import type { TRPCRouter } from "@/integrations/trpc/router"
-import Header from "../components/Header"
 import { NotFound } from "../components/NotFound"
 import { useOAuthCallback } from "../hooks/auth/useOAuthCallback"
 import { useOktaCallback } from "../hooks/auth/useOktaCallback"
@@ -85,7 +84,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<Header />
 				{children}
 				<TanStackDevtools
 					config={{

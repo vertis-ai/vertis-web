@@ -1,4 +1,4 @@
-import { type AuthResult, auth0Client, type User } from "../config/auth0Client"
+import { auth0Client, type AuthResult, type User } from "../config/auth0Client"
 import * as tokenStorage from "../lib/auth/tokenStorage"
 
 // Token Management Functions - now using tokenStorage for hybrid localStorage + cookie support

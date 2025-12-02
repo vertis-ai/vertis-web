@@ -192,28 +192,71 @@ docs/                   # Project documentation
 - Links provide SPA navigation (no full page reload)
 
 ### Layouts
-- Layout is defined in `src/routes/__root.tsx`
-- Use `<Outlet />` component to render child route content
-- Everything in the root route component appears on all routes
-- Example layout pattern:
-  ```tsx
-  import { Outlet, createRootRoute } from '@tanstack/react-router'
-  import { Link } from '@tanstack/react-router'
-  
-  export const Route = createRootRoute({
-    component: () => (
-      <>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        <Outlet /> {/* Child routes render here */}
-      </>
-    ),
-  })
-  ```
+
+**Layout Route Convention** (Similar to Next.js):
+
+TanStack Router supports layout routes using the underscore (`_`) prefix. This is the preferred way to create layouts for groups of routes.
+
+**Key Concepts:**
+- `_layoutName.tsx` → Layout component (wraps child routes)
+- `_layoutName.childRoute.tsx` → Child route under the layout
+- Layouts render `<Outlet />` for child content
+- Perfect for authenticated vs public route separation
+
+**Example Structure:**
+```
+src/routes/
+├── __root.tsx                    # Root shell (no conditional logic)
+├── _authenticated.tsx            # Layout for authenticated routes
+├── _authenticated.index.tsx      # / (with auth + header)
+├── _authenticated.profile.tsx    # /profile (with auth + header)
+├── login.tsx                     # /login (public, no layout)
+└── signup.tsx                    # /signup (public, no layout)
+```
+
+**Authenticated Layout Pattern:**
+```tsx
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import Header from '@/components/Header'
+import { AuthService } from '@/services/authService'
+
+export const Route = createFileRoute('/_authenticated')({
+  beforeLoad: ({ location }) => {
+    if (typeof window === 'undefined') return
+    
+    const authenticated = AuthService.isAuthenticated()
+    
+    if (!authenticated) {
+      throw redirect({
+        to: '/login',
+        search: { redirect: location.pathname },
+      })
+    }
+  },
+  component: AuthenticatedLayout,
+})
+
+function AuthenticatedLayout() {
+  return (
+    <>
+      <Header />
+      <Outlet /> {/* Child routes render here */}
+    </>
+  )
+}
+```
+
+**URL Mapping:**
+- `_authenticated.index.tsx` → `/` (with layout)
+- `_authenticated.profile.tsx` → `/profile` (with layout)
+- `_authenticated.settings.account.tsx` → `/settings/account` (with layout)
+- `login.tsx` → `/login` (no layout)
+
+**Benefits:**
+- ✅ No conditional rendering in root route
+- ✅ Declarative structure (file names define behavior)
+- ✅ Type-safe route generation
+- ✅ Reusable layouts (can create multiple: `_admin`, `_public`, etc.)
 
 ## Data Fetching
 
@@ -537,10 +580,93 @@ export function TextField({ label, type = 'text', placeholder }: {
 
 ### Tailwind CSS
 - **Version**: v4.x (via `@tailwindcss/vite`)
-- **Configuration**: Inline in `src/styles.css` or `tailwind.config.js`
+- **Configuration**: Defined in `src/styles.css` using `@theme inline` and CSS variables
 - **Mobile-First**: Always use mobile-first responsive design
 - **Custom Utilities**: Use `@apply` sparingly, prefer utility classes
-- **Dark Mode**: Use `dark:` prefix for dark mode styles (if configured)
+- **Dark Mode**: Not implemented (dark mode variables are commented out)
+
+### Vertis Design System (Figma Variables)
+
+**Color Naming Convention:**
+Our design system uses Figma-exported variables with custom names instead of standard web convention names. Always reference these when styling:
+
+**Primary Colors:**
+- `--action-blue: #0030FF` - Primary action color (mapped to `--primary`)
+- `--color--white: #FFFFFF` - White background (mapped to `--background`)
+- `--color-vertis-purple: #120550` - Deep purple for dark text/backgrounds
+- `--color-vertis-purple-lt: #776DA4` - Light purple for medium text
+
+**Purple Scale (UI Grays/Neutrals):**
+- `--color-purple-100: #F4F5F9` - Lightest (backgrounds)
+- `--color-purple-200: #CDD0E2` - Light (borders, muted)
+- `--color-purple-300: #A9ACCA` - Medium light (disabled, secondary text)
+- `--color-purple-500: #69679B` - Medium
+- `--color-purple-600: #4C4682` - Medium dark
+- `--color-purple-800: #120550` - Darkest (same as vertis-purple)
+
+**Semantic Colors:**
+- `--color-body-text: #333333` - Default body text color
+- `--color-error-red: #D33E3C` - Error states and destructive actions
+- `--color-modal: #0B0721` - Modal overlays
+
+**Chart Colors:**
+- `--color-chart-blue: #006CA9`
+- `--color-chart-green: #BDD740`
+- `--color-chart-red: #EB5757`
+
+**Typography Sizes (Figma-exported):**
+- `--font-size-h1: 1.375rem` (22px) - Heading 1
+- `--font-size-h2: 1.125rem` (18px) - Heading 2
+- `--font-size-h3: 1rem` (16px) - Heading 3
+- `--font-size-h4: 0.875rem` (14px) - Heading 4
+- `--font-size-copy: 0.875rem` (14px) - **Default body text**
+- `--font-size-input-label: 0.875rem` (14px) - Input labels
+- `--font-size-detail-text: 0.75rem` (12px) - Small text
+- `--font-size-detail-text-bold: 0.75rem` (12px) - Small bold text
+
+**Typography Mapped to Tailwind Utilities:**
+Figma typography is automatically mapped to Tailwind font size utilities:
+- `text-xs` → `--font-size-detail-text` (0.75rem / 12px)
+- `text-sm` → `--font-size-input-label` (0.875rem / 14px)
+- `text-base` → `--font-size-copy` (0.875rem / 14px) - **Default body text**
+- `text-lg` → `--font-size-h3` (1rem / 16px)
+- `text-xl` → `--font-size-h2` (1.125rem / 18px)
+- `text-2xl` → `--font-size-h1` (1.375rem / 22px)
+
+**Global Typography Styles:**
+- Body text defaults to 14px (`--font-size-copy`)
+- H1-H4 headings automatically use Figma sizes
+- `<p>` tags use body text size (14px)
+- `<small>` tags use detail text size (12px)
+- `<label>` tags use input label size (14px)
+
+**ShadCN Token Mapping:**
+These Figma variables are intelligently mapped to ShadCN design tokens:
+- `--primary` → `--action-blue` (Primary blue)
+- `--background` → `--color--white` (White)
+- `--foreground` → `--color-body-text` (Dark gray text)
+- `--destructive` → `--color-error-red` (Red for errors)
+- `--border` → `--color-purple-200` (Light purple borders)
+- `--muted` → `--color-purple-100` (Light backgrounds)
+- `--muted-foreground` → `--color-vertis-purple-lt` (Medium text)
+
+**Usage Examples:**
+```tsx
+// Use Figma variable names directly
+<div className="bg-purple-800 text-white">  {/* Deep purple background */}
+<button className="bg-blue-400">           {/* Action blue (primary) */}
+<p className="text-purple-300">            {/* Medium light purple text */}
+
+// Or use semantic ShadCN tokens (mapped automatically)
+<Button variant="default">                 {/* Uses --primary (action-blue) */}
+<Card>                                      {/* Uses --card (white) */}
+```
+
+**Important Notes:**
+- ❌ Do NOT use standard names like "primary" in variable references - use `--action-blue`
+- ❌ Do NOT use "gray" scale - use `--color-purple-*` scale instead
+- ✅ Use Figma variable names to maintain consistency with design system
+- ✅ Legacy color system is also available (see `@theme inline` in styles.css)
 
 ### Component Patterns
 - Use Radix UI primitives (via Shadcn) for accessible components
