@@ -244,6 +244,20 @@ export function storeTokens(data: {
 }
 
 /**
+ * Retrieve token expiry timestamp (ms since epoch)
+ */
+export function getTokenExpiry(request?: Request): number | null {
+	if (typeof window === "undefined") {
+		if (!request) return null
+		const cookieExpiry = getCookie(TOKEN_EXPIRY_COOKIE, request)
+		return cookieExpiry ? Number.parseInt(cookieExpiry, 10) : null
+	}
+
+	const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
+	return expiry ? Number.parseInt(expiry, 10) : null
+}
+
+/**
  * Sync localStorage tokens to cookies (for SSR and cross-subdomain support)
  * Called automatically when tokens are read from localStorage but not in cookies
  */

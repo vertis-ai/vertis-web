@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { User } from "../../config/auth0Client"
 import { AuthService } from "../../services/authService"
 
+const REFRESH_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
+const REFRESH_CHECK_INTERVAL_MS = 60 * 1000 // 1 minute
+
 export const useEmbeddedAuth = () => {
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
 	const [user, setUser] = useState<User | null>(null)
@@ -159,27 +162,57 @@ export const useEmbeddedAuth = () => {
 	useEffect(() => {
 		if (!isAuthenticated) return
 
-		const checkTokenExpiry = () => {
+		let isMounted = true
+
+		const maintainSession = async () => {
+			if (!isMounted) return
+
 			const token = AuthService.getAccessToken()
 			if (!token) {
-				// Token expired or invalid, logout user
 				logout()
 				return
 			}
+
+			const provider = AuthService.getAuthProvider()
+			if (provider !== "auth0") {
+				return
+			}
+
+			const expiry = AuthService.getTokenExpiry()
+			if (!expiry) {
+				logout()
+				return
+			}
+
+			const timeRemaining = expiry - Date.now()
+			if (timeRemaining <= REFRESH_THRESHOLD_MS) {
+				try {
+					const refreshed = await AuthService.refreshToken()
+					if (refreshed) {
+						setIsAuthenticated(true)
+						setUser(refreshed.user)
+					}
+				} catch (err) {
+					console.error("Auth0 token refresh failed:", err)
+					logout()
+				}
+			}
 		}
 
-		// Check token every 5 minutes
-		const interval = setInterval(checkTokenExpiry, 5 * 60 * 1000)
+		const interval = window.setInterval(() => {
+			void maintainSession()
+		}, REFRESH_CHECK_INTERVAL_MS)
 
-		// Also check on window focus (user returns to tab)
 		const handleFocus = () => {
-			checkTokenExpiry()
+			void maintainSession()
 		}
 
 		window.addEventListener("focus", handleFocus)
+		void maintainSession()
 
 		return () => {
-			clearInterval(interval)
+			isMounted = false
+			window.clearInterval(interval)
 			window.removeEventListener("focus", handleFocus)
 		}
 	}, [isAuthenticated, logout])

@@ -42,6 +42,10 @@ function clearTokens(): void {
 	tokenStorage.clearTokens()
 }
 
+function getTokenExpiry(request?: Request): number | null {
+	return tokenStorage.getTokenExpiry(request)
+}
+
 // Auth0 Embedded Login Methods
 export async function loginWithEmailPassword(
 	email: string,
@@ -166,7 +170,7 @@ export async function resetPassword(email: string): Promise<void> {
 		auth0Client?.changePassword(
 			{
 				connection: "Username-Password-Authentication",
-				email: email,
+				email,
 			},
 			(err) => {
 				if (err) {
@@ -176,6 +180,52 @@ export async function resetPassword(email: string): Promise<void> {
 				resolve()
 			},
 		)
+	})
+}
+
+export async function refreshToken(): Promise<AuthResult | null> {
+	if (!auth0Client) {
+		return null
+	}
+
+	const client = auth0Client
+
+	return new Promise((resolve, reject) => {
+		client.checkSession({}, (err, authResult) => {
+			if (err) {
+				reject(err)
+				return
+			}
+
+			if (!authResult || !authResult.accessToken || !authResult.idToken) {
+				resolve(null)
+				return
+			}
+
+			const result: AuthResult = {
+				accessToken: authResult.accessToken,
+				idToken: authResult.idToken,
+				expiresIn: authResult.expiresIn,
+				tokenType: authResult.tokenType ?? "Bearer",
+				user: {
+					sub: authResult.idTokenPayload.sub,
+					email: authResult.idTokenPayload.email,
+					email_verified: authResult.idTokenPayload.email_verified,
+					name: authResult.idTokenPayload.name,
+					picture: authResult.idTokenPayload.picture,
+					oktaId: undefined,
+					vertis_user_id: authResult.idTokenPayload.vertis_user_id,
+					auth_database_user_id:
+						authResult.idTokenPayload.auth_database_user_id,
+					login_count: authResult.idTokenPayload.login_count,
+					hasura_claims:
+						authResult.accessTokenPayload?.["https://hasura.io/jwt/claims"],
+				},
+			}
+
+			storeTokens(result)
+			resolve(result)
+		})
 	})
 }
 
@@ -189,6 +239,7 @@ export {
 	clearTokens,
 	getAccessToken,
 	getIdToken,
+	getTokenExpiry,
 	getUserInfo,
 	isAuthenticated,
 	storeTokens,
@@ -239,14 +290,6 @@ export function logout(): void {
 	}
 }
 
-// Token Refresh (for future implementation)
-export async function refreshToken(): Promise<AuthResult | null> {
-	// TODO: Implement token refresh logic
-	// This will be implemented in future tickets
-	console.warn("Token refresh not yet implemented")
-	return null
-}
-
 // Export as object for backward compatibility (can be removed after updating all imports)
 export const AuthService = {
 	loginWithEmailPassword,
@@ -262,4 +305,5 @@ export const AuthService = {
 	getAuthProvider,
 	logout,
 	refreshToken,
+	getTokenExpiry,
 }
