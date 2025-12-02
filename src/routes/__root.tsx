@@ -10,6 +10,8 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import Header from "../components/Header"
+import { useOAuthCallback } from "../hooks/auth/useOAuthCallback"
+import { useOktaCallback } from "../hooks/auth/useOktaCallback"
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
 import { isPublicRoute } from "../lib/auth/routeGuards"
 import StoreDevtools from "../lib/demo-store-devtools"
@@ -29,13 +31,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			isServer: typeof window === "undefined",
 		})
 
-		// Skip auth check on server-side
-		if (typeof window === "undefined") {
-			console.log("[ROOT ROUTE] Skipping auth check (server-side)")
-			return
-		}
-
-		// Allow public routes
+		// Allow public routes (both server and client)
 		const isPublic = isPublicRoute(location.pathname)
 		console.log("[ROOT ROUTE] isPublicRoute check", {
 			pathname: location.pathname,
@@ -47,7 +43,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			return
 		}
 
-		// Check authentication
+		if (typeof window === "undefined") return // For SSR, we'll allow the page to render and let client-side handle redirect
+
+		// Client-side: Check authentication
 		const authenticated = AuthService.isAuthenticated()
 		console.log("[ROOT ROUTE] Authentication check", {
 			authenticated,
@@ -91,6 +89,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	// Run OAuth callback hooks globally (like legacy app)
+	// This processes tokens from URL hash/search params on any route
+	useOAuthCallback()
+	useOktaCallback()
+
 	return (
 		<html lang="en">
 			<head>

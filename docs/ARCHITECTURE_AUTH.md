@@ -58,23 +58,29 @@ The original auth implementation was ported from a Vite React app (client-only) 
 #### Token Storage (`src/lib/auth/tokenStorage.ts`)
 
 - **Unified API**: Single functions that work on both server and client
-- **Cookie-first**: Checks cookies first, falls back to localStorage
-- **Automatic sync**: When tokens are stored, they're saved to both cookies and localStorage
+- **localStorage-first**: localStorage is the primary source of truth (for legacy compatibility)
+- **Cookie sync**: Tokens automatically synced to cookies for SSR and cross-subdomain support
+- **Cross-subdomain**: Cookies use `domain: .vertis.com` for sharing across subdomains
 - **Expiry handling**: Validates token expiry on both storage mechanisms
 
 #### Server-Side Access
 
-In route loaders and server functions:
+In route loaders (where `request` is available):
 ```typescript
 import { getAccessToken } from '@/lib/auth/tokenStorage'
 
 export const Route = createFileRoute('/data')({
   loader: async ({ request }) => {
-    const token = getAccessToken(request) // Works on server!
+    const token = getAccessToken(request) // Works on server via cookies!
+    if (!token) {
+      throw redirect({ to: '/login' })
+    }
     // Use token for Hasura request with RLS
   }
 })
 ```
+
+**Note**: In `beforeLoad`, the `request` object may not be available. For full SSR authentication, use route `loader` functions instead.
 
 #### Client-Side Access
 
@@ -83,9 +89,24 @@ In components and hooks:
 import { getAccessToken } from '@/lib/auth/tokenStorage'
 
 function MyComponent() {
-  const token = getAccessToken() // Works on client!
+  const token = getAccessToken() // Works on client via localStorage!
   // Use token for client-side requests
 }
+```
+
+#### Using AuthService (Recommended)
+
+The `AuthService` functions now use `tokenStorage` internally:
+```typescript
+import { AuthService } from '@/services/authService'
+
+// Client-side
+const token = AuthService.getAccessToken()
+const isAuth = AuthService.isAuthenticated()
+
+// Server-side (in route loaders)
+const token = AuthService.getAccessToken(request)
+const isAuth = AuthService.isAuthenticated(request)
 ```
 
 ### Benefits
@@ -98,11 +119,12 @@ function MyComponent() {
 
 ### Migration Path
 
-1. ✅ Create `tokenStorage.ts` with hybrid storage
-2. ⏳ Update `authService.ts` to use new storage functions
-3. ⏳ Update route guards to work with cookies on server
-4. ⏳ Update Hasura client to use tokens from request context
-5. ⏳ Test SSR data fetching with authenticated routes
+1. ✅ Create `tokenStorage.ts` with localStorage-first + cookie sync
+2. ✅ Update `authService.ts` to use new `tokenStorage` functions
+3. ✅ Update route guards to support server-side cookie checks
+4. ⏳ Update Hasura client to use tokens from request context (for SSR support)
+5. ⏳ Test cross-subdomain token sharing between legacy and new app
+6. ⏳ Test SSR data fetching with authenticated routes
 
 ### Security Considerations
 
@@ -231,8 +253,32 @@ This ensures cookies work across:
 ## Implementation Status
 
 1. ✅ Created `tokenStorage.ts` with localStorage-first + cookie sync
-2. ⏳ Update `authService.ts` to use new storage functions
-3. ⏳ Update route guards to check cookies on server
+   - Hybrid storage with localStorage as primary source of truth
+   - Automatic cookie sync for SSR and cross-subdomain support
+   - Cookie domain set to `.vertis.com` for cross-subdomain sharing
+   - Functions work on both server and client
+
+2. ✅ Updated `authService.ts` to use new `tokenStorage` functions
+   - All token management functions now use `tokenStorage` module
+   - Maintains backward compatibility with existing code
+   - Functions accept optional `request` parameter for server-side access
+
+3. ✅ Updated route guards to support server-side cookie checks
+   - Added `requireAuth`, `authenticatedRouteLoader`, and `publicRouteLoader` helpers
+   - Updated `__root.tsx` to handle authentication checks
+   - **Note**: SSR authentication in `beforeLoad` has limitations - route loaders can access request object for full SSR support
+
 4. ⏳ Update Hasura client to use tokens from request context
+   - Need to check if Hasura client is set up
+   - Update GraphQL client to use `tokenStorage.getAccessToken(request)` in route loaders
+   - Ensure Hasura RLS works correctly with user-scoped tokens
+
 5. ⏳ Test cross-subdomain token sharing
+   - Manual testing required once deployed
+   - Verify tokens work across `app.vertis.com` and other subdomains
+   - Verify single sign-on works between legacy and new app
+
 6. ⏳ Test SSR data fetching with authenticated routes
+   - Manual testing required
+   - Verify route loaders can access tokens from cookies
+   - Verify Hasura queries work correctly with RLS during SSR

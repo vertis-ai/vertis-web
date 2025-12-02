@@ -11,24 +11,31 @@ export const useOAuthCallback = () => {
 		const hash = window.location.hash
 		const search = window.location.search
 
-		if (
-			hash ||
-			search.includes("access_token") ||
-			search.includes("id_token")
-		) {
+		console.log("[OAUTH CALLBACK] Checking for OAuth tokens", {
+			hash: hash ? hash.substring(0, 50) + "..." : null,
+			search: search ? search.substring(0, 50) + "..." : null,
+			pathname: window.location.pathname,
+		})
+
+		// Check if we have OAuth tokens in hash or search params
+		const hasHashTokens = hash?.includes("access_token")
+		const hasSearchTokens =
+			search?.includes("access_token") || search?.includes("id_token")
+
+		if (hasHashTokens || hasSearchTokens) {
+			console.log("[OAUTH CALLBACK] Found OAuth tokens, processing...")
 			let urlParams: URLSearchParams
 
 			// Parse parameters from either hash or search
 			if (hash?.includes("access_token")) {
 				// Parse from hash fragment
 				urlParams = new URLSearchParams(hash.substring(1)) // Remove the # and parse
-			} else if (
-				search &&
-				(search.includes("access_token") || search.includes("id_token"))
-			) {
+			} else if (search?.includes("access_token") ||
+				search?.includes("id_token")) {
 				// Parse from search parameters
 				urlParams = new URLSearchParams(search.substring(1)) // Remove the ? and parse
 			} else {
+				console.log("[OAUTH CALLBACK] No valid token parameters found")
 				return
 			}
 
@@ -141,7 +148,22 @@ export const useOAuthCallback = () => {
 						},
 					}
 
+					console.log("[OAUTH CALLBACK] Storing tokens", {
+						hasAccessToken: !!result.accessToken,
+						hasIdToken: !!result.idToken,
+						hasUser: !!result.user,
+					})
+
 					AuthService.storeTokens(result)
+
+					console.log("[OAUTH CALLBACK] Tokens stored, checking localStorage", {
+						accessToken: localStorage.getItem("vertis_access_token")
+							? "exists"
+							: "missing",
+						userInfo: localStorage.getItem("vertis_user_info")
+							? "exists"
+							: "missing",
+					})
 
 					// Clear the state and nonce from localStorage
 					localStorage.removeItem("auth0_state")

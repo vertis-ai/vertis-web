@@ -89,10 +89,13 @@ function setCookie(
 
 /**
  * Delete cookie (client-side only)
+ * Uses same domain as setCookie for proper deletion
  */
 function deleteCookie(name: string): void {
 	if (typeof window === "undefined") return
-	document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+
+	// Reuse setCookie helper with an expired date to ensure consistent domain/path handling
+	setCookie(name, "", -1)
 }
 
 /**

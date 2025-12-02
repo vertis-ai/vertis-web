@@ -1,88 +1,45 @@
 import { auth0Client, type AuthResult, type User } from "../config/auth0Client"
+import * as tokenStorage from "../lib/auth/tokenStorage"
 
-// Token storage keys
-const ACCESS_TOKEN_KEY = "vertis_access_token"
-const ID_TOKEN_KEY = "vertis_id_token"
-const TOKEN_EXPIRY_KEY = "vertis_token_expiry"
-const USER_INFO_KEY = "vertis_user_info"
-const TOKEN_TYPE_KEY = "vertis_token_type"
-
-// Token Management Functions
+// Token Management Functions - now using tokenStorage for hybrid localStorage + cookie support
 function storeTokens(result: AuthResult): void {
-	if (typeof window === "undefined") {
-		return
-	}
-
 	const { accessToken, idToken, expiresIn, tokenType, user } = result
 
-	// Calculate expiry time
-	const expiryTime = Date.now() + expiresIn * 1000
-
-	// Store tokens
-	localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-	localStorage.setItem(ID_TOKEN_KEY, idToken)
-	localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
-	localStorage.setItem(TOKEN_TYPE_KEY, tokenType)
-
-	// Store user info
-	if (user) {
-		localStorage.setItem(USER_INFO_KEY, JSON.stringify(user))
-	}
+	// Use tokenStorage.storeTokens which handles both localStorage and cookies
+	tokenStorage.storeTokens({
+		accessToken,
+		idToken,
+		expiresIn,
+		tokenType,
+		user,
+	})
 }
 
-function getAccessToken(): string | null {
-	if (typeof window === "undefined") {
-		return null
-	}
-
-	const token = localStorage.getItem(ACCESS_TOKEN_KEY)
-	const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
-
-	if (!token || !expiry) {
-		return null
-	}
-
-	// Check if token is expired
-	if (Date.now() > parseInt(expiry)) {
-		clearTokens()
-		return null
-	}
-
-	return token
+function getAccessToken(request?: Request): string | null {
+	// Use tokenStorage.getAccessToken which works on both server and client
+	return tokenStorage.getAccessToken(request)
 }
 
-function getIdToken(): string | null {
-	if (typeof window === "undefined") {
-		return null
-	}
-	return localStorage.getItem(ID_TOKEN_KEY)
+function getIdToken(request?: Request): string | null {
+	// Use tokenStorage.getIdToken which works on both server and client
+	return tokenStorage.getIdToken(request)
 }
 
-function getUserInfo(): User | null {
-	if (typeof window === "undefined") {
-		return null
-	}
-
-	const userInfo = localStorage.getItem(USER_INFO_KEY)
+function getUserInfo(request?: Request): User | null {
+	// Use tokenStorage.getUserInfo which works on both server and client
+	const userInfo = tokenStorage.getUserInfo(request)
 	if (!userInfo) return null
 
 	try {
-		const result = JSON.parse(userInfo) as User
-		return result
+		return userInfo as User
 	} catch {
 		return null
 	}
 }
 
 function clearTokens(): void {
-	if (typeof window === "undefined") {
-		return
-	}
-	localStorage.removeItem(ACCESS_TOKEN_KEY)
-	localStorage.removeItem(ID_TOKEN_KEY)
-	localStorage.removeItem(TOKEN_EXPIRY_KEY)
-	localStorage.removeItem(USER_INFO_KEY)
-	localStorage.removeItem(TOKEN_TYPE_KEY)
+	// Use tokenStorage.clearTokens which clears both localStorage and cookies
+	tokenStorage.clearTokens()
 }
 
 // Auth0 Embedded Login Methods
@@ -222,28 +179,17 @@ export async function resetPassword(email: string): Promise<void> {
 	})
 }
 
-function isAuthenticated(): boolean {
-	if (typeof window === "undefined") {
-		return false
-	}
-
-	const token = getAccessToken()
-	const userInfo = getUserInfo()
-	const hasToken = token !== null
-	const hasUserInfo = userInfo !== null
+function isAuthenticated(request?: Request): boolean {
+	// Use tokenStorage.isAuthenticated which works on both server and client
+	const authenticated = tokenStorage.isAuthenticated(request)
 
 	console.log("[AUTH SERVICE] isAuthenticated check:", {
-		hasToken,
-		hasUserInfo,
-		tokenExists: !!token,
-		userInfoExists: !!userInfo,
-		localStorageKeys: {
-			accessToken: localStorage.getItem("vertis_access_token") ? "exists" : "missing",
-			userInfo: localStorage.getItem("vertis_user_info") ? "exists" : "missing",
-		},
+		authenticated,
+		isServer: typeof window === "undefined",
+		hasRequest: !!request,
 	})
 
-	return hasToken && hasUserInfo
+	return authenticated
 }
 
 // Token Management Exports
