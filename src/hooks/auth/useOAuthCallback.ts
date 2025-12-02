@@ -11,11 +11,6 @@ export const useOAuthCallback = () => {
 		const hash = window.location.hash
 		const search = window.location.search
 
-		console.log("[OAUTH CALLBACK] Checking for OAuth tokens", {
-			hash: hash ? hash.substring(0, 50) + "..." : null,
-			search: search ? search.substring(0, 50) + "..." : null,
-			pathname: window.location.pathname,
-		})
 
 		// Check if we have OAuth tokens in hash or search params
 		const hasHashTokens = hash?.includes("access_token")
@@ -30,8 +25,10 @@ export const useOAuthCallback = () => {
 			if (hash?.includes("access_token")) {
 				// Parse from hash fragment
 				urlParams = new URLSearchParams(hash.substring(1)) // Remove the # and parse
-			} else if (search?.includes("access_token") ||
-				search?.includes("id_token")) {
+			} else if (
+				search?.includes("access_token") ||
+				search?.includes("id_token")
+			) {
 				// Parse from search parameters
 				urlParams = new URLSearchParams(search.substring(1)) // Remove the ? and parse
 			} else {

@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react"
+import { createContext, type ReactNode, useContext } from "react"
 import type { AuthResult, User } from "../config/auth0Client"
 import { useEmbeddedAuth } from "../hooks/auth/useEmbeddedAuth"
 

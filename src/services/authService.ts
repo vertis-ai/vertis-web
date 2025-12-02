@@ -1,4 +1,4 @@
-import { auth0Client, type AuthResult, type User } from "../config/auth0Client"
+import { type AuthResult, auth0Client, type User } from "../config/auth0Client"
 import * as tokenStorage from "../lib/auth/tokenStorage"
 
 // Token Management Functions - now using tokenStorage for hybrid localStorage + cookie support
@@ -181,15 +181,7 @@ export async function resetPassword(email: string): Promise<void> {
 
 function isAuthenticated(request?: Request): boolean {
 	// Use tokenStorage.isAuthenticated which works on both server and client
-	const authenticated = tokenStorage.isAuthenticated(request)
-
-	console.log("[AUTH SERVICE] isAuthenticated check:", {
-		authenticated,
-		isServer: typeof window === "undefined",
-		hasRequest: !!request,
-	})
-
-	return authenticated
+	return tokenStorage.isAuthenticated(request)
 }
 
 // Token Management Exports
@@ -199,7 +191,7 @@ export {
 	getIdToken,
 	getUserInfo,
 	isAuthenticated,
-	storeTokens
+	storeTokens,
 }
 
 // Detect authentication provider from user data

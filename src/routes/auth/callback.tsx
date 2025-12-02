@@ -34,10 +34,10 @@ function LoginCallback() {
 		const search = window.location.search
 
 		const hasAuth0Tokens =
-			(hash && hash.includes("access_token")) ||
+			hash?.includes("access_token") ||
 			(search &&
 				(search.includes("access_token") || search.includes("id_token")))
-		const hasOktaJwt = hash && hash.includes("jwt=")
+		const hasOktaJwt = hash?.includes("jwt=")
 
 		if (!hasAuth0Tokens && !hasOktaJwt) {
 			// No callback parameters found, route back to login with explicit error so UX stays on login

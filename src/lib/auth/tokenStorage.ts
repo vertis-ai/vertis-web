@@ -1,17 +1,17 @@
 /**
  * Hybrid token storage for SSR compatibility with cross-subdomain support
- * 
+ *
  * Strategy:
  * - localStorage: PRIMARY source of truth (for cross-subdomain compatibility with legacy app)
  * - Cookies: Synced from localStorage for SSR support (domain: .vertis.com for cross-subdomain)
- * 
+ *
  * This ensures:
  * 1. localStorage is the source of truth (legacy app compatibility)
  * 2. Tokens sync to cookies automatically (for SSR data fetching)
  * 3. Cross-subdomain token sharing via cookies (domain: .vertis.com)
  * 4. Hasura RLS works correctly with user-scoped tokens on both server and client
  * 5. User only logs in once, works on both legacy and new app
- * 
+ *
  * IMPORTANT: localStorage does NOT work across subdomains. Each subdomain has its own localStorage.
  * However, cookies CAN work across subdomains if domain is set to ".vertis.com"
  * So we sync localStorage → cookies to enable cross-subdomain + SSR support.
@@ -49,13 +49,16 @@ function getCookie(name: string, request?: Request): string | null {
 		const cookieHeader = request.headers.get("cookie")
 		if (!cookieHeader) return null
 
-		const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
-			const [key, value] = cookie.trim().split("=")
-			if (key && value) {
-				acc[key] = decodeURIComponent(value)
-			}
-			return acc
-		}, {} as Record<string, string>)
+		const cookies = cookieHeader.split(";").reduce(
+			(acc, cookie) => {
+				const [key, value] = cookie.trim().split("=")
+				if (key && value) {
+					acc[key] = decodeURIComponent(value)
+				}
+				return acc
+			},
+			{} as Record<string, string>,
+		)
 
 		return cookies[name] || null
 	}
@@ -67,11 +70,7 @@ function getCookie(name: string, request?: Request): string | null {
  * Set cookie (client-side only)
  * Uses domain: .vertis.com for cross-subdomain support
  */
-function setCookie(
-	name: string,
-	value: string,
-	days: number = 7,
-): void {
+function setCookie(name: string, value: string, days: number = 7): void {
 	if (typeof window === "undefined") return
 
 	const expires = new Date()
@@ -79,9 +78,12 @@ function setCookie(
 
 	// Extract domain from current hostname (e.g., app.vertis.com -> .vertis.com)
 	const hostname = window.location.hostname
-	const domain = hostname.includes(".") ? `.${hostname.split(".").slice(-2).join(".")}` : hostname
+	const domain = hostname.includes(".")
+		? `.${hostname.split(".").slice(-2).join(".")}`
+		: hostname
 
 	// Set cookie with secure flags and cross-subdomain domain
+	// biome-ignore lint/suspicious/noDocumentCookie: Direct cookie manipulation is required for cross-subdomain authentication with custom domain and security flags
 	document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; domain=${domain}; SameSite=Lax${
 		window.location.protocol === "https:" ? "; Secure" : ""
 	}`
@@ -100,11 +102,11 @@ function deleteCookie(name: string): void {
 
 /**
  * Get access token - works on both server and client
- * 
+ *
  * Priority:
  * 1. Server-side: Read from cookies (synced from localStorage)
  * 2. Client-side: Read from localStorage (primary source), sync to cookies if needed
- * 
+ *
  * @param request - Request object (server-side only)
  */
 export function getAccessToken(request?: Request): string | null {
@@ -114,7 +116,7 @@ export function getAccessToken(request?: Request): string | null {
 		if (cookieToken) {
 			// Validate expiry from cookie
 			const expiry = getCookie(TOKEN_EXPIRY_COOKIE, request)
-			if (expiry && Date.now() > parseInt(expiry)) {
+			if (expiry && Date.now() > parseInt(expiry, 10)) {
 				return null // Token expired
 			}
 			return cookieToken
@@ -132,7 +134,7 @@ export function getAccessToken(request?: Request): string | null {
 		}
 
 		// Check if token is expired
-		if (Date.now() > parseInt(expiry)) {
+		if (Date.now() > parseInt(expiry, 10)) {
 			clearTokens()
 			return null
 		}
@@ -203,7 +205,7 @@ export function getUserInfo(request?: Request): unknown | null {
 
 /**
  * Store tokens - localStorage is PRIMARY, cookies are synced for SSR/cross-subdomain
- * 
+ *
  * This ensures:
  * 1. localStorage is the source of truth (legacy app compatibility)
  * 2. Cookies are synced for SSR support and cross-subdomain access
@@ -255,8 +257,10 @@ function syncLocalStorageToCookies(): void {
 
 	if (!accessToken || !expiry) return
 
-	const expiryTime = parseInt(expiry)
-	const expiryDays = Math.ceil((expiryTime - Date.now()) / (24 * 60 * 60 * 1000))
+	const expiryTime = parseInt(expiry, 10)
+	const expiryDays = Math.ceil(
+		(expiryTime - Date.now()) / (24 * 60 * 60 * 1000),
+	)
 
 	if (expiryDays > 0) {
 		setCookie(ACCESS_TOKEN_COOKIE, accessToken, expiryDays)
@@ -298,4 +302,3 @@ export function isAuthenticated(request?: Request): boolean {
 	const hasUserInfo = getUserInfo(request) !== null
 	return hasToken && hasUserInfo
 }
-

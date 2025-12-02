@@ -14,13 +14,7 @@ const PUBLIC_ROUTES = [
  * Check if a route is public (doesn't require authentication)
  */
 export const isPublicRoute = (pathname: string): boolean => {
-	const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
-	console.log("[ROUTE GUARDS] isPublicRoute check", {
-		pathname,
-		isPublic,
-		publicRoutes: PUBLIC_ROUTES,
-	})
-	return isPublic
+	return PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
 }
 
 /**

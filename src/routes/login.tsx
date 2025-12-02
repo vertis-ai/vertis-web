@@ -160,7 +160,17 @@ function Login() {
 			setIsLoading(true)
 			setErrors({}) // Clear any previous errors
 
-			// initiateOktaSso now does a form submission and browser redirect
+			// Validate API configuration before attempting SSO
+			const apiBaseUrl =
+				import.meta.env.VITE_API_BASE_URL ||
+				import.meta.env.VITE_VERTIS_SERVERLESS_BASE_URL
+			if (!apiBaseUrl) {
+				throw new Error(
+					"Serverless API is not configured. Please set VITE_API_BASE_URL or VITE_VERTIS_SERVERLESS_BASE_URL environment variable.",
+				)
+			}
+
+			// initiateOktaSso does a form submission and browser redirect
 			// It will return a success message but the page will redirect
 			await initiateOktaSso(email)
 
@@ -170,7 +180,7 @@ function Login() {
 				success: `Redirecting to Okta SSO for ${email}...`,
 			})
 		} catch (error) {
-			console.error("Okta SSO error:", error)
+			console.error("[OKTA SSO] Error:", error)
 			const errorMessage =
 				error instanceof Error
 					? error.message
@@ -257,11 +267,11 @@ function Login() {
 				// First try the AuthService.resetPassword method
 				await resetPassword(email)
 				setErrors({
-					general: "Password reset email sent. Please check your inbox.",
+					success: "Password reset email sent. Please check your inbox.",
 				})
 			} catch (sdkError) {
 				console.warn(
-					"Auth0 SDK method failed, trying direct HTTP approach:",
+					"[PASSWORD RESET] Auth0 SDK method failed, trying direct HTTP approach:",
 					sdkError,
 				)
 
@@ -281,12 +291,20 @@ function Login() {
 					},
 				)
 
-				if (resetResponse.status === 200) {
+				if (resetResponse.ok) {
 					setErrors({
-						general: "Password reset email sent. Please check your inbox.",
+						success: "Password reset email sent. Please check your inbox.",
 					})
 				} else {
-					throw new Error("Password reset failed with unexpected response")
+					const errorText = await resetResponse.text()
+					console.error("[PASSWORD RESET] HTTP error:", {
+						status: resetResponse.status,
+						statusText: resetResponse.statusText,
+						body: errorText,
+					})
+					throw new Error(
+						`Password reset failed: ${resetResponse.status} ${resetResponse.statusText}`,
+					)
 				}
 			}
 		} catch (error) {
@@ -532,6 +550,13 @@ function Login() {
 							className="mb-6"
 						/>
 
+						{errors.success && (
+							<div className="mb-4 p-3 bg-green-100 border border-green-400 rounded-lg">
+								<p className="text-sm text-green-700 font-medium">
+									{errors.success}
+								</p>
+							</div>
+						)}
 						{(errors.general || authError) && (
 							<div className="mb-4 p-3 bg-red-100 border border-red-200 rounded-lg">
 								<p className="text-sm text-red-300 font-medium">

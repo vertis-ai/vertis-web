@@ -1,25 +1,16 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
-import { AuthService } from "@/services/authService"
 import { useEffect } from "react"
+import { AuthService } from "@/services/authService"
 
 export const Route = createFileRoute("/")({
 	beforeLoad: () => {
-		console.log("[INDEX ROUTE] beforeLoad called", {
-			isServer: typeof window === "undefined",
-		})
-
 		// Skip auth check on server-side (SSR)
-		if (typeof window === "undefined") {
-			console.log("[INDEX ROUTE] Skipping auth check (server-side)")
-			return
-		}
+		if (typeof window === "undefined") return
 
 		// Check authentication - redirect to login if not authenticated
 		const authenticated = AuthService.isAuthenticated()
-		console.log("[INDEX ROUTE] Authentication check", { authenticated })
 
 		if (!authenticated) {
-			console.log("[INDEX ROUTE] Not authenticated, redirecting to /login")
 			throw redirect({
 				to: "/login",
 				search: {
@@ -27,8 +18,6 @@ export const Route = createFileRoute("/")({
 				},
 			})
 		}
-
-		console.log("[INDEX ROUTE] Authenticated, allowing access")
 	},
 	component: Home,
 })
@@ -39,12 +28,7 @@ function Home() {
 
 	// Client-side auth check as fallback (in case SSR rendered the page)
 	useEffect(() => {
-		console.log("[HOME COMPONENT] Client-side auth check", {
-			isAuthenticated: AuthService.isAuthenticated(),
-		})
-
 		if (!AuthService.isAuthenticated()) {
-			console.log("[HOME COMPONENT] Not authenticated, redirecting to /login")
 			navigate({
 				to: "/login",
 				search: {
