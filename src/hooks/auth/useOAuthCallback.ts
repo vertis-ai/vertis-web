@@ -11,7 +11,6 @@ export const useOAuthCallback = () => {
 		const hash = window.location.hash
 		const search = window.location.search
 
-
 		// Check if we have OAuth tokens in hash or search params
 		const hasHashTokens = hash?.includes("access_token")
 		const hasSearchTokens =

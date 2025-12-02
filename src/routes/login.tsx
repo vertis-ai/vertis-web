@@ -13,7 +13,7 @@ import { useEffect, useId, useState } from "react"
 import { z } from "zod"
 
 // Email validation schema
-const emailSchema = z.string().email("Please enter a valid email address")
+const emailSchema = z.email("Please enter a valid email address")
 
 export const Route = createFileRoute("/login")({
 	component: Login,
