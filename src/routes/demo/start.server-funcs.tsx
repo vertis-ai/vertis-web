@@ -1,7 +1,7 @@
-import fs from "node:fs";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { useCallback, useState } from "react";
+import fs from "node:fs"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import { useCallback, useState } from "react"
 
 /*
 const loggingMiddleware = createMiddleware().server(
@@ -15,7 +15,7 @@ const loggedServerFunction = createServerFn({ method: "GET" }).middleware([
 ]);
 */
 
-const TODOS_FILE = "todos.json";
+const TODOS_FILE = "todos.json"
 
 async function readTodos(): Promise<{ id: number; name: string }[]> {
 	return JSON.parse(
@@ -29,40 +29,40 @@ async function readTodos(): Promise<{ id: number; name: string }[]> {
 				2,
 			),
 		),
-	);
+	)
 }
 
 const getTodos = createServerFn({
 	method: "GET",
-}).handler(async () => await readTodos());
+}).handler(async () => await readTodos())
 
 const addTodo = createServerFn({ method: "POST" })
 	.inputValidator((d: string) => d)
 	.handler(async ({ data }) => {
-		const todos = await readTodos();
-		todos.push({ id: todos.length + 1, name: data });
-		await fs.promises.writeFile(TODOS_FILE, JSON.stringify(todos, null, 2));
-		return todos;
-	});
+		const todos = await readTodos()
+		todos.push({ id: todos.length + 1, name: data })
+		await fs.promises.writeFile(TODOS_FILE, JSON.stringify(todos, null, 2))
+		return todos
+	})
 
 export const Route = createFileRoute("/demo/start/server-funcs")({
 	component: Home,
 	loader: async () => await getTodos(),
-});
+})
 
 function Home() {
-	const router = useRouter();
-	const initialTodos = Route.useLoaderData();
-	const [todos, setTodos] = useState(initialTodos);
+	const router = useRouter()
+	const initialTodos = Route.useLoaderData()
+	const [todos, setTodos] = useState(initialTodos)
 
-	const [todo, setTodo] = useState("");
+	const [todo, setTodo] = useState("")
 
 	const submitTodo = useCallback(async () => {
-		const updatedTodos = await addTodo({ data: todo });
-		setTodos(updatedTodos);
-		setTodo("");
-		router.invalidate();
-	}, [todo, router]);
+		const updatedTodos = await addTodo({ data: todo })
+		setTodos(updatedTodos)
+		setTodo("")
+		router.invalidate()
+	}, [todo, router])
 
 	return (
 		<div
@@ -91,7 +91,7 @@ function Home() {
 						onChange={(e) => setTodo(e.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {
-								submitTodo();
+								submitTodo()
 							}
 						}}
 						placeholder="Enter a new todo..."
@@ -108,5 +108,5 @@ function Home() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

@@ -1,25 +1,71 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
+import type { TRPCRouter } from "@/integrations/trpc/router"
+import { TanStackDevtools } from "@tanstack/react-devtools"
+import type { QueryClient } from "@tanstack/react-query"
 import {
 	createRootRouteWithContext,
 	HeadContent,
+	redirect,
 	Scripts,
-} from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import type { TRPCRouter } from "@/integrations/trpc/router";
-import Header from "../components/Header";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import StoreDevtools from "../lib/demo-store-devtools";
-import appCss from "../styles.css?url";
+} from "@tanstack/react-router"
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
+import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
+import Header from "../components/Header"
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
+import { isPublicRoute } from "../lib/auth/routeGuards"
+import StoreDevtools from "../lib/demo-store-devtools"
+import { AuthService } from "../services/authService"
+import appCss from "../styles.css?url"
 
 interface MyRouterContext {
-	queryClient: QueryClient;
+	queryClient: QueryClient
 
-	trpc: TRPCOptionsProxy<TRPCRouter>;
+	trpc: TRPCOptionsProxy<TRPCRouter>
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+	beforeLoad: ({ location }) => {
+		console.log("[ROOT ROUTE] beforeLoad called", {
+			pathname: location.pathname,
+			isServer: typeof window === "undefined",
+		})
+
+		// Skip auth check on server-side
+		if (typeof window === "undefined") {
+			console.log("[ROOT ROUTE] Skipping auth check (server-side)")
+			return
+		}
+
+		// Allow public routes
+		const isPublic = isPublicRoute(location.pathname)
+		console.log("[ROOT ROUTE] isPublicRoute check", {
+			pathname: location.pathname,
+			isPublic,
+		})
+
+		if (isPublic) {
+			console.log("[ROOT ROUTE] Route is public, allowing access")
+			return
+		}
+
+		// Check authentication
+		const authenticated = AuthService.isAuthenticated()
+		console.log("[ROOT ROUTE] Authentication check", {
+			authenticated,
+			pathname: location.pathname,
+		})
+
+		if (!authenticated) {
+			console.log("[ROOT ROUTE] Not authenticated, redirecting to /login")
+			throw redirect({
+				to: "/login",
+				search: {
+					redirect: location.pathname,
+				},
+			})
+		}
+
+		console.log("[ROOT ROUTE] Authenticated, allowing access")
+	},
 	head: () => ({
 		meta: [
 			{
@@ -42,7 +88,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
-});
+})
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
@@ -69,5 +115,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<Scripts />
 			</body>
 		</html>
-	);
+	)
 }

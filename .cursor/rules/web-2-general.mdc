@@ -54,6 +54,7 @@ This is a TanStack Start application - a full-stack React framework with file-ba
 - **Formatter**: Biome (NOT Prettier)
 - **Indentation**: Tabs (not spaces)
 - **Quote Style**: Double quotes
+- **Semicolons**: Disabled (asNeeded - no semicolons)
 - **Line Endings**: Auto-detect
 - Run `pnpm check` to lint and format, `pnpm lint` for linting only, `pnpm format` for formatting only
 
@@ -82,8 +83,13 @@ This is a TanStack Start application - a full-stack React framework with file-ba
 ```
 src/
 ├── components/          # React components
-│   ├── ui/             # Shadcn UI components (button, input, etc.)
-│   └── [feature]/      # Feature-specific components
+│   ├── ui/             # Shadcn UI components ONLY (button, input, label, select, etc.)
+│   │                   # These are base UI primitives from Shadcn
+│   ├── [feature]/      # Feature-specific composite components
+│   │                   # Examples: auth/, reports/, dashboard/
+│   │                   # Contains feature-specific pages, forms, and complex components
+│   └── [shared]/       # Shared composite components used across features
+│                       # Examples: layout/, navigation/, common/
 ├── routes/             # File-based routes (TanStack Router)
 │   ├── __root.tsx      # Root layout route
 │   ├── index.tsx       # Home route (/)
@@ -92,12 +98,27 @@ src/
 │   ├── tanstack-query/ # TanStack Query setup
 │   └── trpc/           # tRPC setup (router, client, react hooks)
 ├── hooks/              # Custom React hooks
+│   ├── [feature]/      # Feature-specific hooks (e.g., hooks/auth/, hooks/reports/)
+│   └── form/           # Form-related hooks (TanStack Form wrappers)
 ├── lib/                # Utility functions and shared code
+│   ├── auth/           # Auth utilities (route guards, etc.)
+│   └── [domain]/       # Domain-specific utilities
 ├── data/               # Static data, mock data, data fetching functions
 ├── utils/              # Utility functions (MCP handlers, etc.)
 ├── styles.css          # Global styles and Tailwind imports
 └── router.tsx          # Router configuration
+
+docs/                   # Project documentation
+├── ARCHITECTURE_*.md   # Architecture documentation
+└── *.md                # Other documentation files
 ```
+
+### Documentation
+
+- **All documentation files** MUST be placed in the `docs/` directory
+- Use descriptive filenames: `ARCHITECTURE_AUTH.md`, `DEPLOYMENT.md`, etc.
+- Documentation should be in Markdown format (`.md`)
+- Include architecture decisions, implementation details, and migration guides
 
 ## Routing (TanStack Router)
 
@@ -263,34 +284,60 @@ You can use TanStack Query as an addition or alternative to route loaders. Both 
 - **Benefits**: Loaders simplify data fetching logic and ensure data is available before render
 - **Documentation**: See [TanStack Router Loader docs](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters)
 
-## Forms (TanStack Form)
+## Forms (TanStack Form + Zod)
 
-### Form Setup
-- Use `@tanstack/react-form` for form state management
-- Create custom form hooks in `src/hooks/` using `createFormHook`
-- Use Zod schemas for validation with `validators.onBlur` or `validators.onChange`
+### Form Validation Pattern
+- **ALWAYS use TanStack Form** (`@tanstack/react-form`) for form state management
+- **ALWAYS use Zod** (`zod`) for form validation schemas
+- TanStack Form has native Zod support - pass Zod schemas directly to validators
+- **DO NOT use React Hook Form** - TanStack Form is the standard for this project
+- Create custom form hooks in `src/hooks/form/` using `createFormHook` from TanStack Form
 
-### Form Pattern
+### Form Field Components
+- Form field components MUST be built using ShadCN UI components from `components/ui/`
+- Create form field components that wrap ShadCN components (Input, Label, Select, etc.)
+- Form field components should integrate with TanStack Form's field context
+- Example pattern: ShadCN Input → Form TextField component → TanStack Form Field
+
+### Form Setup Pattern
 ```tsx
-import { useAppForm } from '@/hooks/useForm' // Custom hook
+import { createFormHook } from '@tanstack/react-form'
 import { z } from 'zod'
+import { TextField, TextArea } from '@/components/[feature]/FormComponents'
+import { fieldContext, formContext } from '@/hooks/form/[feature]-form-context'
 
-const schema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  email: z.string().email('Invalid email'),
+// Create form hook with field components
+export const { useAppForm } = createFormHook({
+  fieldComponents: {
+    TextField,
+    TextArea,
+  },
+  fieldContext,
+  formContext,
 })
 
+// Define Zod schema
+const schema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
+
+// Use in component
 function MyForm() {
   const form = useAppForm({
     defaultValues: {
       title: '',
       email: '',
+      password: '',
     },
     validators: {
-      onBlur: schema,
+      onBlur: schema, // Zod schema passed directly
+      onChange: schema, // Can also validate on change
     },
-    onSubmit: ({ value }) => {
-      // Handle submission
+    onSubmit: async ({ value }) => {
+      // Handle submission - value is typed from Zod schema
+      console.log(value)
     },
   })
   
@@ -302,7 +349,60 @@ function MyForm() {
       <form.AppField name="title">
         {(field) => <field.TextField label="Title" />}
       </form.AppField>
+      
+      <form.AppField name="email">
+        {(field) => <field.TextField label="Email" type="email" />}
+      </form.AppField>
+      
+      <form.AppField name="password">
+        {(field) => <field.TextField label="Password" type="password" />}
+      </form.AppField>
+      
+      <form.AppForm>
+        <form.SubscribeButton label="Submit" />
+      </form.AppForm>
     </form>
+  )
+}
+```
+
+### Form Field Component Pattern
+```tsx
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useFieldContext } from '@/hooks/form/[feature]-form-context'
+import { useStore } from '@tanstack/react-form'
+
+export function TextField({ label, type = 'text', placeholder }: {
+  label: string
+  type?: string
+  placeholder?: string
+}) {
+  const field = useFieldContext<string>()
+  const errors = useStore(field.store, (state) => state.meta.errors)
+  
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={field.name}>{label}</Label>
+      <Input
+        id={field.name}
+        type={type}
+        value={field.state.value}
+        placeholder={placeholder}
+        onBlur={field.handleBlur}
+        onChange={(e) => field.handleChange(e.target.value)}
+        aria-invalid={errors.length > 0}
+      />
+      {field.state.meta.isTouched && errors.length > 0 && (
+        <div className="text-sm text-destructive">
+          {errors.map((error) => (
+            <div key={typeof error === 'string' ? error : error.message}>
+              {typeof error === 'string' ? error : error.message}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 ```
@@ -363,13 +463,77 @@ function MyForm() {
   ```
 - **Documentation**: See [TanStack Store docs](https://tanstack.com/store/latest)
 
-## UI Components & Styling
+## Component Organization & Architecture
+
+### Component Hierarchy
+
+1. **ShadCN UI Components** (`src/components/ui/`)
+   - **ONLY** base UI primitives from Shadcn library
+   - Examples: `button.tsx`, `input.tsx`, `label.tsx`, `select.tsx`, `textarea.tsx`
+   - These are installed via: `pnpx shadcn@latest add [component-name]`
+   - **DO NOT** create custom versions of these - use Shadcn components directly
+   - **DO NOT** put feature-specific logic in these files
+   - These are the building blocks for all other components
+
+2. **Feature Components** (`src/components/[feature]/`)
+   - Feature-specific composite components
+   - Examples: `components/auth/`, `components/reports/`, `components/dashboard/`
+   - Contains:
+     - Feature-specific pages/layouts
+     - Feature-specific forms (built with ShadCN + TanStack Form)
+     - Feature-specific complex components
+     - Feature-specific icons/assets
+   - **MUST** use ShadCN UI components as building blocks
+   - Can create feature-specific form field components that wrap ShadCN components
+
+3. **Shared Components** (`src/components/[shared]/`)
+   - Components used across multiple features
+   - Examples: `components/layout/`, `components/navigation/`, `components/common/`
+   - Only create if component is truly shared across features
+   - Prefer feature-specific organization over premature abstraction
+
+### Component Creation Rules
+
+**When to create a new component:**
+- Component is reused in multiple places
+- Component encapsulates complex logic or UI
+- Component represents a distinct feature or domain concept
+
+**When NOT to create a component:**
+- Simple one-off UI that won't be reused
+- Can be expressed as a simple JSX fragment or inline element
+- Premature abstraction before understanding reuse patterns
+
+**Component Naming:**
+- Feature components: `PascalCase.tsx` (e.g., `LoginForm.tsx`, `ReportCard.tsx`)
+- ShadCN components: `camelCase.tsx` (e.g., `button.tsx`, `input.tsx`) - follows Shadcn convention
+- Form field components: `PascalCase.tsx` (e.g., `TextField.tsx`, `PasswordField.tsx`)
+
+### Form Component Organization
+
+**Form Field Components:**
+- Create in `src/components/[feature]/FormComponents.tsx` or `src/components/[feature]/form/`
+- MUST wrap ShadCN UI components (Input, Label, Select, etc.)
+- MUST integrate with TanStack Form field context
+- Example: `components/auth/FormComponents.tsx` contains `TextField`, `PasswordField`, etc.
+
+**Form Hooks:**
+- Create in `src/hooks/form/[feature]-form.ts`
+- Use `createFormHook` from TanStack Form
+- Register form field components
+- Export `useAppForm` or `use[Feature]Form` hook
+
+**Form Context:**
+- Create in `src/hooks/form/[feature]-form-context.ts`
+- Export `fieldContext` and `formContext` for TanStack Form integration
 
 ### Shadcn UI
 - Components are in `src/components/ui/`
 - Add new components: `pnpx shadcn@latest add [component-name]`
 - Components use `class-variance-authority` for variants
 - Use `cn()` utility from `@/lib/utils` for conditional classes
+- **ALWAYS prefer ShadCN components** over creating custom UI primitives
+- **NEVER** modify ShadCN components directly - extend them via composition
 
 ### Tailwind CSS
 - **Version**: v4.x (via `@tailwindcss/vite`)
@@ -379,10 +543,11 @@ function MyForm() {
 - **Dark Mode**: Use `dark:` prefix for dark mode styles (if configured)
 
 ### Component Patterns
-- Use Radix UI primitives for accessible components
+- Use Radix UI primitives (via Shadcn) for accessible components
 - Compose Shadcn components for complex UIs
 - Use `asChild` prop pattern for component composition
 - Follow Shadcn's "New York" style (as configured in `components.json`)
+- Build feature components by composing ShadCN UI components
 
 ### Styling Utilities
 - Use `cn()` from `@/lib/utils` for merging Tailwind classes
@@ -483,10 +648,22 @@ describe('MyComponent', () => {
 ## Best Practices
 
 ### Component Organization
+- **ALWAYS** use ShadCN UI components as the foundation - never create custom UI primitives
+- Build feature components by composing ShadCN components
 - Keep components small and focused
 - Extract reusable logic into custom hooks
 - Colocate related files (component, types, utils) in feature folders
 - Use composition over configuration
+- Organize by feature/domain, not by component type
+- Prefer feature-specific organization over shared components until reuse is proven
+
+### Form Best Practices
+- **ALWAYS** use TanStack Form + Zod for form validation
+- **NEVER** use React Hook Form - TanStack Form is the standard
+- Create form field components that wrap ShadCN UI components
+- Use Zod schemas for all form validation
+- Leverage TanStack Form's built-in Zod integration
+- Create feature-specific form hooks using `createFormHook`
 
 ### Performance
 - Use React.memo() for expensive components
@@ -507,11 +684,16 @@ describe('MyComponent', () => {
 - Provide user-friendly error messages
 
 ### Code Quality
-- Run `pnpm check` before committing
+- **ALWAYS run `pnpm typecheck`** after making changes to ensure TypeScript types are correct
+- **ALWAYS run `pnpm check`** after making changes to ensure no linting or formatting errors
+- **NEVER use `any` type** - use proper TypeScript types, `unknown` with type guards, or infer types correctly
+- **NEVER use `@ts-ignore` or `@ts-expect-error`** - fix type errors properly instead of suppressing them
+- **AVOID type casting** (`as Type`) - prefer proper type inference and type guards
 - Write tests for critical functionality
 - Keep functions pure when possible
 - Use meaningful variable and function names
 - Add JSDoc comments for public APIs
+- **SVG Accessibility**: All SVG elements MUST have `aria-label` or `title` element for accessibility (Biome A11Y rule)
 
 ## MCP Integration (Experimental)
 
@@ -542,13 +724,16 @@ describe('MyComponent', () => {
 | Purpose | Location | Pattern |
 |---------|----------|---------|
 | Routes | `src/routes/` | File-based, `createFileRoute` |
-| Components | `src/components/` | Named exports, PascalCase |
-| UI Components | `src/components/ui/` | Shadcn components |
-| Hooks | `src/hooks/` | `use` prefix, camelCase |
-| Utilities | `src/lib/` | camelCase functions |
+| ShadCN UI Components | `src/components/ui/` | Shadcn primitives only (button, input, label, etc.) |
+| Feature Components | `src/components/[feature]/` | Feature-specific composite components |
+| Shared Components | `src/components/[shared]/` | Cross-feature shared components |
+| Form Field Components | `src/components/[feature]/FormComponents.tsx` | Wrap ShadCN + TanStack Form |
+| Hooks | `src/hooks/[feature]/` | `use` prefix, camelCase, organized by feature |
+| Form Hooks | `src/hooks/form/[feature]-form.ts` | `createFormHook` with field components |
+| Utilities | `src/lib/[domain]/` | camelCase functions, organized by domain |
 | Data Fetching | TanStack Query or tRPC | `useQuery`, `trpc.*.useQuery` |
-| Forms | TanStack Form + Zod | Custom hooks in `src/hooks/` |
+| Forms | TanStack Form + Zod | Feature form hooks, Zod schemas, ShadCN components |
 | State | TanStack Store | `src/lib/` or feature folders |
 | API Routes | `src/routes/api.*` | TanStack Start or tRPC |
-| Types | Colocated or `src/types/` | Interfaces preferred |
+| Types | Colocated with components/hooks | Interfaces preferred |
 | Tests | Colocated `*.test.ts` | Vitest + Testing Library |
