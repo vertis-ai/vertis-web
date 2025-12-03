@@ -578,6 +578,149 @@ export function TextField({ label, type = 'text', placeholder }: {
 - **ALWAYS prefer ShadCN components** over creating custom UI primitives
 - **NEVER** modify ShadCN components directly - extend them via composition
 
+### Icon Standards
+
+**Icon Storage & Organization:**
+- **ALWAYS** store custom icons in `src/components/icons/` directory
+- **NEVER** use static SVG files in `public/` directory for custom icons
+- Use React components for all custom icons exported from Figma
+- Export all icons from `src/components/icons/index.ts` for clean imports
+
+**Icon Component Pattern:**
+```tsx
+import { useId, type SVGProps } from "react"
+
+type Props = SVGProps<SVGSVGElement>
+
+export const IconName = (props: Props) => {
+  const clipId = useId() // Use for any IDs (clipPaths, gradients, etc.)
+  
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Icon description"
+      role="img"
+      {...props}
+    >
+      <path
+        d="..."
+        stroke="currentColor"  // Use currentColor for themeable icons
+        fill="currentColor"
+        strokeWidth="1.5"
+      />
+    </svg>
+  )
+}
+```
+
+**Icon Conversion Process:**
+1. Export SVG from Figma
+2. Convert to React component:
+   - Replace hardcoded colors with `currentColor`
+   - Replace any `id` attributes with `useId()` hook for uniqueness
+   - Add TypeScript types: `type Props = SVGProps<SVGSVGElement>`
+   - Add accessibility: `aria-label` and `role="img"`
+   - Use prop spreading: `{...props}` for flexibility
+3. Place in `src/components/icons/[IconName].tsx`
+4. Export from `src/components/icons/index.ts`
+5. Import and use: `import { IconName } from "@/components/icons"`
+
+**Icon Usage Rules:**
+- **Themeable Colors**: Use `currentColor` instead of hardcoded hex colors for fills and strokes
+- **Unique IDs**: Use React's `useId()` hook for any SVG IDs (clipPaths, gradients, masks, filters)
+- **Sizing**: Default size in viewBox, allow override via `className` prop (e.g., `w-6 h-6`)
+- **Type Safety**: Always extend `SVGProps<SVGSVGElement>` for full prop support
+- **Accessibility**: Include `aria-label` and `role="img"` by default
+
+**IconButton Component:**
+For consistent icon button styling, use the `IconButton` component from `src/components/common/IconButton.tsx`:
+
+```tsx
+import { IconButton } from "@/components/common/IconButton"
+import { SettingsIcon } from "@/components/icons"
+
+// Default usage (40x40px, circular, hover bg)
+<IconButton aria-label="Settings">
+  <SettingsIcon className="w-8 h-8 text-[var(--color-purple-300)]" />
+</IconButton>
+
+// Size variants
+<IconButton size="sm" aria-label="Close">  {/* 32x32px */}
+  <XIcon />
+</IconButton>
+
+<IconButton size="lg" aria-label="Menu">   {/* 48x48px */}
+  <MenuIcon />
+</IconButton>
+
+// Ghost variant (subtle hover)
+<IconButton variant="ghost" aria-label="Info">
+  <InfoIcon />
+</IconButton>
+```
+
+**IconButton Features:**
+- Always circular (`rounded-full`)
+- Pointer cursor on hover
+- Consistent hover/active states
+- Built-in focus states (accessibility)
+- Size variants: `sm` (32px), `md` (40px - default), `lg` (48px)
+- Style variants: `default`, `ghost`
+- Extends all HTML button attributes
+
+**Why React Components Over Static SVGs:**
+- ✅ Bundled with app (no extra HTTP requests)
+- ✅ Tree-shaken (unused icons removed)
+- ✅ Themeable with CSS variables and `currentColor`
+- ✅ Type-safe with full TypeScript support
+- ✅ Flexible props (size, color, className)
+- ✅ Can add logic, state, or animations
+- ✅ Clear ownership and versioning
+- ❌ Static SVGs require extra requests, can't be themed, no TypeScript support
+
+**Example Icon Component (SettingsIcon):**
+```tsx
+import { useId, type SVGProps } from "react"
+
+type Props = SVGProps<SVGSVGElement>
+
+export const SettingsIcon = (props: Props) => {
+  const clipId = useId()
+  
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Settings"
+      role="img"
+      {...props}
+    >
+      <g clipPath={`url(#${clipId})`}>
+        <path
+          d="M13.7667 5.756C..."
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      <defs>
+        <clipPath id={clipId}>
+          <rect width="32" height="32" rx="16" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+```
+
 ### Tailwind CSS
 - **Version**: v4.x (via `@tailwindcss/vite`)
 - **Configuration**: Defined in `src/styles.css` using `@theme inline` and CSS variables
@@ -851,8 +994,10 @@ describe('MyComponent', () => {
 |---------|----------|---------|
 | Routes | `src/routes/` | File-based, `createFileRoute` |
 | ShadCN UI Components | `src/components/ui/` | Shadcn primitives only (button, input, label, etc.) |
+| Custom Icons | `src/components/icons/` | React components, SVG as TSX, `currentColor`, `useId()` |
 | Feature Components | `src/components/[feature]/` | Feature-specific composite components |
 | Shared Components | `src/components/[shared]/` | Cross-feature shared components |
+| Icon Buttons | `IconButton` component | Circular, consistent hover, pointer cursor |
 | Form Field Components | `src/components/[feature]/FormComponents.tsx` | Wrap ShadCN + TanStack Form |
 | Hooks | `src/hooks/[feature]/` | `use` prefix, camelCase, organized by feature |
 | Form Hooks | `src/hooks/form/[feature]-form.ts` | `createFormHook` with field components |
