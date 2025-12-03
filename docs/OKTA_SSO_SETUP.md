@@ -176,4 +176,3 @@ The key improvement is that the new version:
 - `vite.config.ts` - Vite proxy configuration
 - `src/hooks/auth/useOktaCallback.ts` - Handles callback from Okta with JWT
 - `src/services/authService.ts` - Auth token storage and management
-
