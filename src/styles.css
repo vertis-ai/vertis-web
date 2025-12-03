@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -6,8 +8,7 @@
 
 body {
   @apply m-0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu',
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -19,41 +20,68 @@ code {
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.871 0.006 286.286);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.871 0.006 286.286);
-}
+ /* exported from figma */
+  --action-blue: #0030ff;
+  --color--white: #ffffff;
+  --color-purple-100: #f4f5f9;
+  --color-vertis-purple: #120550;
+  --color-vertis-purple-lt: #776da4;
+  --color-purple-300: #a9acca;
+  --color-purple-600: #4c4682;
+  --color-purple-200: #cdd0e2;
+  --color-purple-500: #69679b;
+  --color-modal: #0b0721;
+  --color-body-text: #333333;
+  --color-chart-blue: #006ca9;
+  --color-chart-green: #bdd740;
+  --color-chart-red: #eb5757;
+  --color-error-red: #d33e3c;
+  --font-size-copy: 0.875rem;
+  --font-size-h1: 1.375rem;
+  --font-size-h2: 1.125rem;
+  --font-size-h3: 1rem;
+  --font-size-h4: 0.875rem;
+  --font-size-detail-text-bold: 0.75rem;
+  --font-size-input-label: 0.875rem;
+  --font-size-detail-text: 0.75rem;
 
+  /* ShadCN Design Tokens - Mapped to Vertis Figma Variables */
+  --background: var(--color--white);
+  --foreground: var(--color-body-text);
+  --card: var(--color--white);
+  --card-foreground: var(--color-vertis-purple);
+  --popover: var(--color--white);
+  --popover-foreground: var(--color-vertis-purple);
+  --primary: var(--action-blue);
+  --primary-foreground: var(--color--white);
+  --secondary: var(--color-purple-100);
+  --secondary-foreground: var(--color-vertis-purple);
+  --muted: var(--color-purple-100);
+  --muted-foreground: var(--color-vertis-purple-lt);
+  --accent: var(--color-purple-200);
+  --accent-foreground: var(--color-vertis-purple);
+  --destructive: var(--color-error-red);
+  --destructive-foreground: var(--color--white);
+  --border: var(--color-purple-200);
+  --input: var(--color-purple-200);
+  --ring: var(--action-blue);
+  --chart-1: var(--color-chart-blue);
+  --chart-2: var(--color-chart-green);
+  --chart-3: var(--color-chart-red);
+  --chart-4: var(--color-purple-300);
+  --chart-5: var(--color-purple-500);
+  --radius: 0.625rem;
+  --sidebar: var(--color--white);
+  --sidebar-foreground: var(--color-vertis-purple);
+  --sidebar-primary: var(--color-vertis-purple);
+  --sidebar-primary-foreground: var(--color--white);
+  --sidebar-accent: var(--color-purple-100);
+  --sidebar-accent-foreground: var(--color-vertis-purple);
+  --sidebar-border: var(--color-purple-200);
+  --sidebar-ring: var(--action-blue);
+
+}
+/* 
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
@@ -87,9 +115,10 @@ code {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.274 0.006 286.033);
   --sidebar-ring: oklch(0.442 0.017 285.786);
-}
+} */
 
 @theme inline {
+  /* ShadCN Design System Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -114,10 +143,109 @@ code {
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Legacy Vertis Color System */
+  /* Blue (Interactive) */
+  --color-blue-100: #F4F6FC;
+  --color-blue-200: #DFE5F8;
+  --color-blue-300: #4768F8;
+  --color-blue-400: #0030FF;
+  
+  /* Charts */
+  --color-charts-01: #D3ACE2;
+  --color-charts-02: #FFE080;
+  --color-charts-03: #37B0F4;
+  --color-charts-04: #D2E283;
+  --color-charts-05: #FF8484;
+  --color-charts-06: #558FAF;
+  --color-charts-07: #A280C2;
+  --color-charts-08: #FFB777;
+  
+  /* Disabled */
+  --color-disabled: #C5C5E8;
+  --color-disabled-text: #8889B3;
+  
+  /* Neutral */
+  --color-neutral-100: #FFFFFF;
+  --color-neutral-200: #F2F2F2;
+  --color-neutral-300: #E0E0E0;
+  --color-neutral-400: #BDBDBD;
+  --color-neutral-500: #828282;
+  --color-neutral-600: #4F4F4F;
+  --color-neutral-700: #333333;
+  --color-neutral-800: #000000;
+  
+  /* Green */
+  --color-green-100: #76B44D;
+  
+  /* Lines */
+  --color-lines-100: #DFDFEE;
+  
+  /* Orange (legacy) */
+  --color-orange: #FF460B;
+  
+  /* Purple */
+  --color-purple-100: #F4F5F9;
+  --color-purple-200: #CDD0E2;
+  --color-purple-300: #A9ACCA;
+  --color-purple-400: #8889B3;
+  --color-purple-500: #69679B;
+  --color-purple-600: #4C4682;
+  --color-purple-700: #302669;
+  --color-purple-800: #120550;
+  
+  /* Red */
+  --color-red-100: #FFF4F4;
+  --color-red-200: #FAE8E8;
+  --color-red-300: #D33E3C;
+  --color-red-400: #B50303;
+  
+  /* Success */
+  --color-success-100: #EEF9F1;
+  --color-success-400: #55C574;
+  --color-success-700: #3B8A51;
+  
+  /* Font Colors */
+  --color-font-100: #776DA4;
+  
+  /* Text Colors */
+  --color-text-dark: #120550;
+  --color-text-medium: #776DA4;
+  
+  /* White */
+  --color-white: #FFFFFF;
+  
+  /* Disabled (for buttons) */
+  --color-disabled: #C5C5E8;
+  --color-disabled-text: #8889B3;
+  
+  /* Transparent */
+  --color-transparent: transparent;
+
+  /* Font Family */
+  --font-family-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+  /* Font Sizes - Mapped to Tailwind Typography */
+  --font-size-xs: var(--font-size-detail-text);        /* 0.75rem / 12px */
+  --font-size-sm: var(--font-size-input-label);        /* 0.875rem / 14px */
+  --font-size-base: var(--font-size-copy);             /* 0.875rem / 14px - Default body text */
+  --font-size-lg: var(--font-size-h3);                 /* 1rem / 16px */
+  --font-size-xl: var(--font-size-h2);                 /* 1.125rem / 18px */
+  --font-size-2xl: var(--font-size-h1);                /* 1.375rem / 22px */
+  --font-size-3xl: 1.875rem;                           /* 30px - Extra large if needed */
+  --font-size-4xl: 2.25rem;                            /* 36px - Extra large if needed */
+
+  /* Box Shadows */
+  --shadow-input-focus: 0px 0px 4px #0030FF;
+  --shadow-dropdown: 0px 2px 8px rgba(0, 0, 0, 0.25);
+
+  /* Border Radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -134,5 +262,61 @@ code {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-copy); /* 0.875rem / 14px - Default body text */
   }
+  
+  /* Heading styles using Figma typography */
+  h1 {
+    font-size: var(--font-size-h1); /* 1.375rem / 22px */
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: var(--font-size-h2); /* 1.125rem / 18px */
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  
+  h3 {
+    font-size: var(--font-size-h3); /* 1rem / 16px */
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  
+  h4 {
+    font-size: var(--font-size-h4); /* 0.875rem / 14px */
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  
+  /* Paragraph and default text */
+  p {
+    font-size: var(--font-size-copy); /* 0.875rem / 14px */
+  }
+  
+  /* Small text / detail text */
+  small {
+    font-size: var(--font-size-detail-text); /* 0.75rem / 12px */
+  }
+  
+  /* Input labels */
+  label {
+    font-size: var(--font-size-input-label); /* 0.875rem / 14px */
+  }
+}
+
+/* Custom Animations from Legacy */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@theme {
+  --animate-fade: fadeIn 300ms ease-in-out;
 }

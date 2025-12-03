@@ -1,14 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@tanstack/react-store";
+import { createFileRoute } from "@tanstack/react-router"
+import { useStore } from "@tanstack/react-store"
 
-import { fullName, store } from "@/lib/demo-store";
+import { fullName, store } from "@/lib/demo-store"
 
 export const Route = createFileRoute("/demo/store")({
 	component: DemoStore,
-});
+})
 
 function FirstName() {
-	const firstName = useStore(store, (state) => state.firstName);
+	const firstName = useStore(store, (state) => state.firstName)
 	return (
 		<input
 			type="text"
@@ -18,11 +18,11 @@ function FirstName() {
 			}
 			className="bg-white/10 rounded-lg px-4 py-2 outline-none border border-white/20 hover:border-white/40 focus:border-white/60 transition-colors duration-200 placeholder-white/40"
 		/>
-	);
+	)
 }
 
 function LastName() {
-	const lastName = useStore(store, (state) => state.lastName);
+	const lastName = useStore(store, (state) => state.lastName)
 	return (
 		<input
 			type="text"
@@ -32,16 +32,16 @@ function LastName() {
 			}
 			className="bg-white/10 rounded-lg px-4 py-2 outline-none border border-white/20 hover:border-white/40 focus:border-white/60 transition-colors duration-200 placeholder-white/40"
 		/>
-	);
+	)
 }
 
 function FullName() {
-	const fName = useStore(fullName);
+	const fName = useStore(fullName)
 	return (
 		<div className="bg-white/10 rounded-lg px-4 py-2 outline-none ">
 			{fName}
 		</div>
-	);
+	)
 }
 
 function DemoStore() {
@@ -60,5 +60,5 @@ function DemoStore() {
 				<FullName />
 			</div>
 		</div>
-	);
+	)
 }
