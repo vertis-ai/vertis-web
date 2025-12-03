@@ -1,4 +1,5 @@
 import Header from "@/components/Header"
+import { Sidebar } from "@/components/common/Sidebar"
 import { AuthService } from "@/services/authService"
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
@@ -34,9 +35,20 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
 	return (
-		<>
+		<div className="h-screen flex flex-col overflow-hidden">
+			{/* Fixed Header */}
 			<Header />
-			<Outlet />
-		</>
+
+			{/* Main Layout: Sidebar + Content */}
+			<div className="flex flex-1 overflow-hidden">
+				{/* Fixed Sidebar */}
+				<Sidebar />
+
+				{/* Scrollable Main Content */}
+				<main className="flex-1 overflow-y-auto bg-(--color-purple-100)">
+					<Outlet />
+				</main>
+			</div>
+		</div>
 	)
 }
