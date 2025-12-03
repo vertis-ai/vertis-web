@@ -6,13 +6,20 @@ import { AuthProvider } from "./providers/AuthProvider"
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen.ts"
 
+type RouterOptions = {
+	request?: Request
+}
+
 // Create a new router instance
-export const getRouter = () => {
+export const getRouter = (options?: RouterOptions) => {
 	const rqContext = TanstackQuery.getContext()
 
 	const router = createRouter({
 		routeTree,
-		context: { ...rqContext },
+		context: {
+			...rqContext,
+			request: options?.request,
+		},
 		defaultPreload: "intent",
 		Wrap: (props: { children: React.ReactNode }) => {
 			return (

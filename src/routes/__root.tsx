@@ -4,7 +4,6 @@ import type { QueryClient } from "@tanstack/react-query"
 import {
 	createRootRouteWithContext,
 	HeadContent,
-	redirect,
 	Scripts,
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
@@ -13,41 +12,18 @@ import { NotFound } from "../components/NotFound"
 import { useOAuthCallback } from "../hooks/auth/useOAuthCallback"
 import { useOktaCallback } from "../hooks/auth/useOktaCallback"
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
-import { isPublicRoute } from "../lib/auth/routeGuards"
 import StoreDevtools from "../lib/demo-store-devtools"
-import { AuthService } from "../services/authService"
 import appCss from "../styles.css?url"
 
 interface MyRouterContext {
 	queryClient: QueryClient
-
 	trpc: TRPCOptionsProxy<TRPCRouter>
+	request?: Request
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	notFoundComponent: NotFound,
-	beforeLoad: ({ location }) => {
-		// Allow public routes (both server and client)
-		const isPublic = isPublicRoute(location.pathname)
-
-		if (isPublic) {
-			return
-		}
-
-		if (typeof window === "undefined") return
-
-		// Client-side: Check authentication
-		const authenticated = AuthService.isAuthenticated()
-
-		if (!authenticated) {
-			throw redirect({
-				to: "/login",
-				search: {
-					redirect: location.pathname,
-				},
-			})
-		}
-	},
+	// No auth check at root level - handled by _authenticated layout for private routes
 	head: () => ({
 		meta: [
 			{

@@ -6,7 +6,7 @@ import { useEmbeddedAuth } from "@/hooks/auth/useEmbeddedAuth"
 import { useOktaSso } from "@/hooks/auth/useOktaSso"
 import { usePasswordValidation } from "@/hooks/auth/usePasswordValidation"
 import { AuthService } from "@/services/authService"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { Eye, EyeOff } from "lucide-react"
 import { useEffect, useId, useState } from "react"
 import { z } from "zod"
@@ -15,6 +15,12 @@ import { z } from "zod"
 const emailSchema = z.email("Please enter a valid email address")
 
 export const Route = createFileRoute("/login")({
+	beforeLoad: ({ context }) => {
+		const request = typeof window === "undefined" ? context.request : undefined
+		if (AuthService.isAuthenticated(request)) {
+			throw redirect({ to: "/" })
+		}
+	},
 	component: Login,
 })
 

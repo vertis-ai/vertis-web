@@ -9,6 +9,10 @@ export const useEmbeddedAuth = () => {
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
 	const [user, setUser] = useState<User | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
+	// isBootstrapping should be false on server (no effects run), true on client until first check completes
+	const [isBootstrapping, setIsBootstrapping] = useState(
+		typeof window !== "undefined",
+	)
 	const [error, setError] = useState<string | null>(null)
 	const initializedRef = useRef(false)
 
@@ -23,10 +27,13 @@ export const useEmbeddedAuth = () => {
 			setIsAuthenticated(newIsAuthenticated)
 			setUser(userInfo)
 			setIsLoading(false)
-		} catch (_) {
+			setIsBootstrapping(false)
+		} catch (err) {
+			console.error("[AUTH INIT] Auth initialization error:", err)
 			setIsAuthenticated(false)
 			setUser(null)
 			setIsLoading(false)
+			setIsBootstrapping(false)
 		}
 	}, [])
 
@@ -221,6 +228,7 @@ export const useEmbeddedAuth = () => {
 		isAuthenticated,
 		user,
 		isLoading,
+		isBootstrapping,
 		error,
 		loginWithEmailPassword,
 		loginWithGoogle,
