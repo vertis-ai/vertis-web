@@ -1,22 +1,33 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import Header from "@/components/Header"
 import { AuthService } from "@/services/authService"
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_authenticated")({
-	beforeLoad: ({ location }) => {
-		// Check authentication for all routes under this layout
-		if (typeof window === "undefined") return
+	beforeLoad: ({ context, location }) => {
+		const isServer = typeof window === "undefined"
+		const request = isServer ? context.request : undefined
+		const authenticated = AuthService.isAuthenticated(request)
+		const redirectTarget = location.href ?? location.pathname
 
-		const authenticated = AuthService.isAuthenticated()
+		if (authenticated) {
+			return
+		}
 
-		if (!authenticated) {
+		if (isServer) {
 			throw redirect({
-				to: "/login",
+				to: "/auth/loading",
 				search: {
-					redirect: location.pathname,
+					redirect: redirectTarget,
 				},
 			})
 		}
+
+		throw redirect({
+			to: "/login",
+			search: {
+				redirect: redirectTarget,
+			},
+		})
 	},
 	component: AuthenticatedLayout,
 })

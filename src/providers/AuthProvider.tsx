@@ -6,6 +6,7 @@ interface AuthContextType {
 	isAuthenticated: boolean
 	user: User | null
 	isLoading: boolean
+	isBootstrapping: boolean
 	error: string | null
 	loginWithEmailPassword: (
 		email: string,
@@ -29,7 +30,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const auth = useEmbeddedAuth()
-
 	return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
 

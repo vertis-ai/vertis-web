@@ -17,7 +17,6 @@ export const useOAuthCallback = () => {
 			search?.includes("access_token") || search?.includes("id_token")
 
 		if (hasHashTokens || hasSearchTokens) {
-			console.log("[OAUTH CALLBACK] Found OAuth tokens, processing...")
 			let urlParams: URLSearchParams
 
 			// Parse parameters from either hash or search
@@ -31,7 +30,6 @@ export const useOAuthCallback = () => {
 				// Parse from search parameters
 				urlParams = new URLSearchParams(search.substring(1)) // Remove the ? and parse
 			} else {
-				console.log("[OAUTH CALLBACK] No valid token parameters found")
 				return
 			}
 
@@ -144,22 +142,7 @@ export const useOAuthCallback = () => {
 						},
 					}
 
-					console.log("[OAUTH CALLBACK] Storing tokens", {
-						hasAccessToken: !!result.accessToken,
-						hasIdToken: !!result.idToken,
-						hasUser: !!result.user,
-					})
-
 					AuthService.storeTokens(result)
-
-					console.log("[OAUTH CALLBACK] Tokens stored, checking localStorage", {
-						accessToken: localStorage.getItem("vertis_access_token")
-							? "exists"
-							: "missing",
-						userInfo: localStorage.getItem("vertis_user_info")
-							? "exists"
-							: "missing",
-					})
 
 					// Clear the state and nonce from localStorage
 					localStorage.removeItem("auth0_state")

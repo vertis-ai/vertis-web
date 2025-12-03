@@ -18,6 +18,7 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-qu
 import { Route as DemoTableRouteImport } from './routes/demo/table'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
+import { Route as AuthLoadingRouteImport } from './routes/auth/loading'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -74,6 +75,11 @@ const DemoStoreRoute = DemoStoreRouteImport.update({
 const DemoMcpTodosRoute = DemoMcpTodosRouteImport.update({
   id: '/demo/mcp-todos',
   path: '/demo/mcp-todos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoadingRoute = AuthLoadingRouteImport.update({
+  id: '/auth/loading',
+  path: '/auth/loading',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/auth/callback'
+    | '/auth/loading'
     | '/demo/mcp-todos'
     | '/demo/store'
     | '/demo/table'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/auth/callback'
+    | '/auth/loading'
     | '/demo/mcp-todos'
     | '/demo/store'
     | '/demo/table'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/auth/callback'
+    | '/auth/loading'
     | '/demo/mcp-todos'
     | '/demo/store'
     | '/demo/table'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthLoadingRoute: typeof AuthLoadingRoute
   DemoMcpTodosRoute: typeof DemoMcpTodosRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTableRoute: typeof DemoTableRoute
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/demo/mcp-todos'
       fullPath: '/demo/mcp-todos'
       preLoaderRoute: typeof DemoMcpTodosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/loading': {
+      id: '/auth/loading'
+      path: '/auth/loading'
+      fullPath: '/auth/loading'
+      preLoaderRoute: typeof AuthLoadingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -486,6 +506,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthLoadingRoute: AuthLoadingRoute,
   DemoMcpTodosRoute: DemoMcpTodosRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTableRoute: DemoTableRoute,
