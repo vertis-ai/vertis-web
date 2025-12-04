@@ -1,6 +1,5 @@
 import { AuthService } from "@/services/authService"
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core"
-import { print } from "graphql"
 
 export class HasuraGraphQLError extends Error {
 	errors: readonly HasuraGraphQLErrorItem[]
@@ -39,15 +38,15 @@ interface GraphQLResponse<TData> {
 function resolveDocument<TData, TVariables>(
 	document: DocumentLike<TData, TVariables>,
 ): string {
-	if (typeof document === "string") {
-		return document
-	}
+	if (typeof document === "string") return document
 
-	if ("loc" in document && document.loc?.source.body) {
+	if ("loc" in document && document.loc?.source.body)
 		return document.loc.source.body
-	}
 
-	return print(document)
+	// Fallback: should not happen with properly generated TypedDocumentNodes
+	throw new Error(
+		"Unable to extract GraphQL document string. Ensure documents are generated via graphql-codegen.",
+	)
 }
 
 export function documentToString<TData, TVariables>(

@@ -409,6 +409,72 @@ function MyComponent() {
 }
 ```
 
+**Mutation Options Pattern** (REQUIRED):
+- **ALWAYS** wrap GraphQL mutation documents with `createHasuraMutationOptions` from `src/integrations/hasura/mutation-options.ts`
+- Mutations use TanStack Query's `useMutation` hook for optimistic updates and cache invalidation
+- Pattern:
+  ```ts
+  // 1. Create mutation GraphQL document
+  // src/data/hasura/queries/users/updateCurrentUserDetails.graphql
+  mutation UpdateCurrentUserDetails(
+    $vertisUserId: String!
+    $userDetails: core_user_set_input!
+  ) {
+    update_core_user_by_pk(
+      pk_columns: { id: $vertisUserId }
+      _set: $userDetails
+    ) {
+      id
+      selected_organization_id
+    }
+  }
+  
+  // 2. Run `pnpm codegen` to generate types
+  
+  // 3. Create mutation options factory
+  // src/data/hasura/queries/users/updateCurrentUserDetails-options.ts
+  import { createHasuraMutationOptions } from "@/integrations/hasura/mutation-options"
+  import type {
+    UpdateCurrentUserDetailsMutation,
+    UpdateCurrentUserDetailsMutationVariables,
+  } from "@/data/hasura/__generated__/index"
+  import { UpdateCurrentUserDetailsDocument } from "@/data/hasura/__generated__/index"
+  
+  export function updateCurrentUserDetailsMutationOptions() {
+    return createHasuraMutationOptions<
+      UpdateCurrentUserDetailsMutation,
+      UpdateCurrentUserDetailsMutationVariables
+    >({
+      document: UpdateCurrentUserDetailsDocument,
+      requireAuth: true, // Automatically includes user token
+    })
+  }
+  
+  // 4. Use in component
+  function MyComponent({ vertisUserId }) {
+    const queryClient = useQueryClient()
+    const { mutate, isPending } = useMutation({
+      ...updateCurrentUserDetailsMutationOptions(),
+      onSuccess: () => {
+        // Invalidate related queries to refetch
+        queryClient.invalidateQueries({
+          queryKey: getCurrentUserDetailsQuery(vertisUserId).queryKey,
+        })
+      },
+    })
+    
+    const handleUpdate = () => {
+      mutate({
+        vertisUserId,
+        userDetails: { selected_organization_id: newOrgId },
+      })
+    }
+    
+    return <button onClick={handleUpdate} disabled={isPending}>Update</button>
+  }
+  ```
+- **Benefits**: Type-safe mutations, automatic token injection, easy cache invalidation, loading states
+
 **SSR Prefetching Best Practices**:
 - **ALWAYS consider prefetching** data in route loaders when:
   - Data is needed for initial render (above the fold)
