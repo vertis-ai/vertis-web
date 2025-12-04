@@ -1,3 +1,4 @@
+import type { HasuraClient } from "@/integrations/hasura/client"
 import type { TRPCRouter } from "@/integrations/trpc/router"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 import type { QueryClient } from "@tanstack/react-query"
@@ -18,6 +19,7 @@ import appCss from "../styles.css?url"
 interface MyRouterContext {
 	queryClient: QueryClient
 	trpc: TRPCOptionsProxy<TRPCRouter>
+	hasura: HasuraClient
 	request?: Request
 }
 

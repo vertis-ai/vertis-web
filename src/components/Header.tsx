@@ -1,5 +1,6 @@
 import { VertisLogo } from "@/components/auth/icons/VertisLogo"
 import { IconButton } from "@/components/common/IconButton"
+import { OrganizationSelector } from "@/components/common/OrganizationSelector"
 import { BentoBoxIcon, SettingsIcon } from "@/components/icons"
 import { Link } from "@tanstack/react-router"
 
@@ -16,8 +17,9 @@ export default function Header() {
 				</Link>
 			</div>
 
-			{/* Right Section: Settings Icon */}
-			<div className="flex items-center">
+			{/* Right Section: Organization Selector + Settings Icon */}
+			<div className="flex items-center gap-4">
+				<OrganizationSelector />
 				<IconButton aria-label="Settings">
 					<SettingsIcon className="w-8 h-8 text-(--color-purple-300)" />
 				</IconButton>

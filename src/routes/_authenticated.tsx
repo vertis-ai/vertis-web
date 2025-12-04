@@ -1,5 +1,6 @@
 import Header from "@/components/Header"
 import { Sidebar } from "@/components/common/Sidebar"
+import { getCurrentUserDetailsQuery } from "@/data/hasura/queries/users/getCurrentUserDetails-options"
 import { AuthService } from "@/services/authService"
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
@@ -29,6 +30,24 @@ export const Route = createFileRoute("/_authenticated")({
 				redirect: redirectTarget,
 			},
 		})
+	},
+	loader: async ({ context }) => {
+		// Prefetch user data for the entire authenticated layout
+		// This ensures Header/Sidebar have data available immediately on SSR
+		const userInfo = AuthService.getUserInfo(context.request)
+		const vertisUserId =
+			userInfo?.vertis_user_id ||
+			(userInfo?.hasura_claims?.["x-hasura-vertis-user-id"] as
+				| string
+				| undefined) ||
+			""
+
+		if (vertisUserId) {
+			// Prefetch on server (SSR) and cache for client (CSR)
+			await context.queryClient.ensureQueryData(
+				getCurrentUserDetailsQuery(vertisUserId, context.request),
+			)
+		}
 	},
 	component: AuthenticatedLayout,
 })

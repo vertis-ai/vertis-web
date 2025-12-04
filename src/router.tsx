@@ -1,6 +1,7 @@
 import { createRouter } from "@tanstack/react-router"
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query"
 import * as TanstackQuery from "./integrations/tanstack-query/root-provider"
+import { createHasuraClient } from "@/integrations/hasura/client"
 import { AuthProvider } from "./providers/AuthProvider"
 
 // Import the generated route tree
@@ -13,12 +14,14 @@ type RouterOptions = {
 // Create a new router instance
 export const getRouter = (options?: RouterOptions) => {
 	const rqContext = TanstackQuery.getContext()
+	const hasura = createHasuraClient(options?.request)
 
 	const router = createRouter({
 		routeTree,
 		context: {
 			...rqContext,
 			request: options?.request,
+			hasura,
 		},
 		defaultPreload: "intent",
 		Wrap: (props: { children: React.ReactNode }) => {
