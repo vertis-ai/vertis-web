@@ -20,6 +20,7 @@ import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
 import { Route as AuthLoadingRouteImport } from './routes/auth/loading'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthenticatedHasuraPingRouteImport } from './routes/_authenticated.hasura-ping'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -87,6 +88,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedHasuraPingRoute = AuthenticatedHasuraPingRouteImport.update({
+  id: '/hasura-ping',
+  path: '/hasura-ping',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
   path: '/demo/start/server-funcs',
@@ -151,6 +157,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/hasura-ping': typeof AuthenticatedHasuraPingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/hasura-ping': typeof AuthenticatedHasuraPingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/_authenticated/hasura-ping': typeof AuthenticatedHasuraPingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/loading': typeof AuthLoadingRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/login'
     | '/mcp'
+    | '/hasura-ping'
     | '/auth/callback'
     | '/auth/loading'
     | '/demo/mcp-todos'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/mcp'
+    | '/hasura-ping'
     | '/auth/callback'
     | '/auth/loading'
     | '/demo/mcp-todos'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/mcp'
+    | '/_authenticated/hasura-ping'
     | '/auth/callback'
     | '/auth/loading'
     | '/demo/mcp-todos'
@@ -402,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/hasura-ping': {
+      id: '/_authenticated/hasura-ping'
+      path: '/hasura-ping'
+      fullPath: '/hasura-ping'
+      preLoaderRoute: typeof AuthenticatedHasuraPingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
       path: '/demo/start/server-funcs'
@@ -490,10 +509,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedHasuraPingRoute: typeof AuthenticatedHasuraPingRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedHasuraPingRoute: AuthenticatedHasuraPingRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
