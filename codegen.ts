@@ -1,4 +1,8 @@
 import type { CodegenConfig } from "@graphql-codegen/cli"
+import { config as loadEnv } from "dotenv"
+
+// Load .env file so process.env has access to VITE_* variables
+loadEnv()
 
 const schemaUrl =
 	process.env.HASURA_GRAPHQL_URL ??

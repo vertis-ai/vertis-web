@@ -1,0 +1,21 @@
+query GetCurrentUserDetails($vertisUserId: String!) {
+	core_user_by_pk(id: $vertisUserId) {
+		id
+		created
+		email
+		name
+		selected_organization_id
+		is_vertis_admin
+		assigned_orgs(order_by: { organization_id: asc }) {
+			data_admin
+			organization_id
+			organization {
+				id
+				name
+			}
+		}
+		user_assigned_org {
+			id
+		}
+	}
+}

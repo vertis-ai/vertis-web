@@ -1,0 +1,12 @@
+mutation UpdateCurrentUserDetails(
+	$vertisUserId: String!
+	$userDetails: core_user_set_input!
+) {
+	update_core_user_by_pk(
+		pk_columns: { id: $vertisUserId }
+		_set: $userDetails
+	) {
+		id
+		selected_organization_id
+	}
+}

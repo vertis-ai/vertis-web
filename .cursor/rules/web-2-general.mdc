@@ -409,6 +409,48 @@ function MyComponent() {
 }
 ```
 
+**SSR Prefetching Best Practices**:
+- **ALWAYS consider prefetching** data in route loaders when:
+  - Data is needed for initial render (above the fold)
+  - Data is shared across multiple components in the route
+  - Data is used in layout components (Header, Sidebar, etc.)
+  - You want to eliminate loading states and provide instant UI
+- **When to prefetch in layout routes**:
+  - User profile data (used in Header/Sidebar) → Prefetch in `_authenticated.tsx` loader
+  - Organization data (used in nav) → Prefetch in `_authenticated.tsx` loader
+  - Global settings/config → Prefetch in root or layout loader
+- **Performance benefits**:
+  - Data fetched once on server during SSR
+  - HTML includes real data (no loading skeletons)
+  - Cache automatically hydrated to client
+  - `useSuspenseQuery` in components reads from cache (no refetch)
+  - Subsequent navigation uses cached data (instant)
+- **Example - Layout Prefetch**:
+  ```ts
+  // In _authenticated.tsx (layout that wraps all protected routes)
+  export const Route = createFileRoute('/_authenticated')({
+    loader: async ({ context }) => {
+      const userInfo = AuthService.getUserInfo(context.request)
+      const vertisUserId = userInfo?.vertis_user_id || ""
+      
+      if (vertisUserId) {
+        // Prefetch user data for Header/Sidebar on every authenticated page
+        await context.queryClient.ensureQueryData(
+          getCurrentUserDetailsQuery(vertisUserId, context.request)
+        )
+      }
+    },
+    component: AuthenticatedLayout,
+  })
+  
+  // Now Header component reads from cache instantly:
+  function Header() {
+    const { data } = useSuspenseQuery(getCurrentUserDetailsQuery(vertisUserId))
+    // Data is already in cache from loader - no loading state!
+  }
+  ```
+- **Rule of thumb**: If data appears on every page or is critical for first paint, prefetch it in the nearest parent loader.
+
 **GraphQL Code Generator**:
 - Config: `codegen.ts` at project root
 - Run: `pnpm codegen` (requires `HASURA_GRAPHQL_URL` + optionally `HASURA_ADMIN_SECRET` in `.env`)
