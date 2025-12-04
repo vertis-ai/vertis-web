@@ -1,3 +1,4 @@
+import type { TypedDocumentString } from "@/data/hasura/__generated__/index"
 import { AuthService } from "@/services/authService"
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core"
 
@@ -16,9 +17,8 @@ export interface HasuraGraphQLErrorItem {
 	extensions?: Record<string, unknown>
 }
 
-export type DocumentLike<TData, TVariables> =
-	| string
-	| TypedDocumentNode<TData, TVariables>
+// biome-ignore format: Prettier keeps reformatting this on save
+export type DocumentLike<TData, TVariables> = string | TypedDocumentNode<TData, TVariables> | TypedDocumentString<TData, TVariables>
 
 export interface ExecuteHasuraOptions<TData, TVariables> {
 	document: DocumentLike<TData, TVariables>
@@ -39,6 +39,8 @@ function resolveDocument<TData, TVariables>(
 	document: DocumentLike<TData, TVariables>,
 ): string {
 	if (typeof document === "string") return document
+
+	if (document instanceof String) return document.toString()
 
 	if ("loc" in document && document.loc?.source.body)
 		return document.loc.source.body

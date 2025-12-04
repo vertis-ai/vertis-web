@@ -39,7 +39,7 @@ const config: CodegenConfig = {
 			],
 			config: {
 				useTypeImports: true,
-				documentMode: "documentNode",
+				documentMode: "string",
 			},
 		},
 	},
